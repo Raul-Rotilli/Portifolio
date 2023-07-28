@@ -2,7 +2,7 @@
 
 :root {
     --cor-primaria: #0278AE;
-    --cor-secundaria: #000000;
+    --cor-secundaria: #F6F6F6;
     --cor-terciaria: #9EF5CF;
     --cor-hover: #E8FFB1;
 
@@ -71,6 +71,22 @@ body{
     align-items: center;
     gap: 32px;
 }
+.apresentacao__imgs{
+    display: flex;
+    flex-direction: row;
+    justify-content:space-around;
+    align-items: center;
+    gap: 10px;
+}
+.apresentacao__imgs img{
+    width: 10%;
+
+}
+.apresentacao__imgs img:hover{
+    width: 12%;
+
+}
+
 .apresentacao__links__subtitulo{
     font-family: var(--fonte-primaria);
     font-weight: 400;
@@ -95,10 +111,6 @@ body{
     background-color: var(--cor-hover);
 }
 
-.apresentacao__imagem{
-    width: 80%;
-    border-radius: 40%;
-}
 
 .rodape{
     color: var(--cor-secundaria);
