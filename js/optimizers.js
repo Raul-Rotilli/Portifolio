@@ -56,7 +56,7 @@
     { id: 'adam', name: 'Adam', rule: 'θ ← θ − η·m̂ / (√v̂ + ε)', token: 'mint', draw: '#9ef5cf' }
   ];
   var MU = 0.9, RHO = 0.99, B1 = 0.9, B2 = 0.999, EPS = 1e-8;
-  var SPEEDS = [{ v: 0.5, label: '½×' }, { v: 1, label: '1×' }, { v: 2, label: '2×' }, { v: 4, label: '4×' }];
+  var SPEEDS = [{ v: 0.5, label: '½×', aria: 'meia velocidade' }, { v: 1, label: '1×', aria: 'velocidade normal' }, { v: 2, label: '2×', aria: 'velocidade dobrada' }, { v: 4, label: '4×', aria: 'velocidade quádrupla' }];
   var LR_MIN = -3, LR_MAX = -0.5; // log10 do η
 
   var G = [0, 0];
@@ -283,10 +283,11 @@
     if (!isFinite(v)) return '∞';
     if (v === 0) return '0';
     if (v >= 1000) return RR.fmt(v, 0);
-    if (v >= 0.001) return RR.fmt(v, v >= 10 ? 2 : 4);
+    if (v >= 0.001) return fixed(v, v >= 10 ? 2 : 4);
     var parts = v.toExponential(2).split('e'), m = +parts[0], e = +parts[1];
     return RR.fmt(m, 2) + '·10' + String(e).split('').map(function (c) { return SUP[c] || c; }).join('');
   }
+  function fixed(v, d) { return v.toLocaleString('pt-BR', { minimumFractionDigits: d, maximumFractionDigits: d }); }
   function fmtCoord(v) { return (v < 0 ? '−' : '') + RR.fmt(Math.abs(v), 2); }
   function fmtLr(v) { return RR.fmt(v, v < 0.01 ? 4 : 3); }
 
@@ -296,9 +297,11 @@
   var ICON_RESET = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 12a8.5 8.5 0 1 0 2.6-6.1"/><path d="M3.5 4v4.5H8"/></svg>';
 
   /* =========================================================================
-     Montagem (preguiçosa: só quando a seção chega perto da tela)
+     Montagem: o DOM (leve) é criado já, para não deslocar o layout depois;
+     o tamanho vem do ResizeObserver e o trabalho pesado (campo + corrida)
+     só roda com o módulo visível.
      ========================================================================= */
-  RR.onFirstVisible(root, init, { rootMargin: '300px 0px' });
+  init();
 
   function init() {
     var el = RR.el;
@@ -389,7 +392,7 @@
     ]);
 
     var speedBtns = SPEEDS.map(function (sp) {
-      return el('button', { type: 'button', 'aria-pressed': sp.v === state.speed ? 'true' : 'false', 'aria-label': 'Velocidade ' + sp.label.replace('½', 'meio '), onclick: function () {
+      return el('button', { type: 'button', 'aria-pressed': sp.v === state.speed ? 'true' : 'false', 'aria-label': sp.aria, onclick: function () {
         state.speed = sp.v;
         speedBtns.forEach(function (b, i) { b.setAttribute('aria-pressed', SPEEDS[i] === sp ? 'true' : 'false'); });
       } }, sp.label);
@@ -438,7 +441,7 @@
     function loadField() {
       var S = state.S, key = S.id + ':' + state.W + 'x' + state.H + '@' + state.dpr;
       state.dom = fitDomain(S, state.W, state.H);
-      if (cache[key]) { state.field = cache[key]; state.job = null; }
+      if (cache[key]) { state.field = cache[key]; state.job = cache[key].done ? null : cache[key]; } // retoma cálculo interrompido
       else {
         var job = FieldJob(S, state.W, state.H, state.dpr);
         job.key = key;
@@ -558,7 +561,8 @@
 
     function syncMeta() {
       var S = state.S, p = startPoint();
-      meta.textContent = 'alvo: loss < ' + fmtLoss(S.target) + '  ·  limite: ' + RR.fmt(S.maxSteps, 0) + ' passos  ·  largada (' + fmtCoord(p[0]) + '; ' + fmtCoord(p[1]) + ')';
+      meta.textContent = ['alvo: loss < ' + fmtLoss(S.target), 'limite: ' + RR.fmt(S.maxSteps, 0) + ' passos', 'largada (' + fmtCoord(p[0]) + '; ' + fmtCoord(p[1]) + ')']
+        .map(function (t) { return t.replace(/ /g, '\u00a0'); }).join('  ·  ');
     }
 
     function syncLr(setInput) {
@@ -882,12 +886,11 @@
       state.dirty = true; kick();
     }, 120);
     if ('ResizeObserver' in window) new ResizeObserver(onResize).observe(stage);
-    else window.addEventListener('resize', onResize);
+    else { window.addEventListener('resize', onResize); window.addEventListener('load', onResize); }
 
     RR.on('reducedmotion', function () { restart(!RR.reducedMotion); });
 
     syncSurface();
-    resize();
     restart(!RR.reducedMotion);
   }
 })();
