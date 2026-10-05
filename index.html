@@ -1,54 +1,318 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="pt-BR" class="no-js">
 
 <head>
     <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Portifolio</title>
-    <link rel="stylesheet" href="./styles/style.css">
+    <title>Raul Rotilli Aguirre · IA &amp; Machine Learning</title>
+    <meta name="description" content="Portfólio de Raul Rotilli Aguirre, desenvolvedor em formação com foco em Inteligência Artificial e Machine Learning. Galeria de retratos gerados por algoritmos de IA, playground de redes neurais e o RaulGPT.">
+    <meta name="theme-color" content="#07080d">
+    <meta name="color-scheme" content="dark">
+    <meta property="og:type" content="website">
+    <meta property="og:locale" content="pt_BR">
+    <meta property="og:title" content="Raul Rotilli Aguirre · IA & Machine Learning">
+    <meta property="og:description" content="Um portfólio que é, ele mesmo, um experimento de IA: retratos gerados por algoritmos, rede neural treinando ao vivo e um mini RAG no navegador.">
+    <meta property="og:image" content="https://portifolio-raul-rotilli.vercel.app/assets/og-image.png">
+    <meta property="og:url" content="https://portifolio-raul-rotilli.vercel.app/">
+    <meta name="twitter:card" content="summary_large_image">
+    <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap">
+    <script>document.documentElement.classList.replace('no-js', 'js');</script>
+    <link rel="stylesheet" href="styles/style.css">
+    <link rel="stylesheet" href="styles/hero.css">
+    <link rel="stylesheet" href="styles/gallery.css">
+    <link rel="stylesheet" href="styles/playground.css">
+    <link rel="stylesheet" href="styles/optimizers.css">
+    <link rel="stylesheet" href="styles/raulgpt.css">
+    <link rel="stylesheet" href="styles/timeline.css">
+    <link rel="stylesheet" href="styles/palette.css">
 </head>
 
 <body>
-    <header class="cabecalho">
-        <nav class="cabecalho__menu">
-            <a class="cabecalho__menu__link" href="index.html">Home</a>
-            <a class="cabecalho__menu__link" href="./pages/about.html">Sobre mim</a>
-            <a class="cabecalho__menu__link" href="./pages/curriculo.html">Currículo & Certificações</a>
-        </nav>
-    </header>
-    <main class="apresentacao">
-        <section class="apresentacao__conteudo">
-            <h1 class="apresentacao__conteudo__titulo">PORTFÓLIO<strong class="titulo-destaque"> RAUL ROTILLI AGUIRRE 
-                </strong></h1>
-            <p class="apresentacao__conteudo__texto">Olá! Seja bem vindo ao meu portfólio, sou um estudante de programação com foco em Back-End. Atualmente estou estudando Java, Spring, HTML e CSS e JavaScript.</p>
-            <div class="apresentacao__imgs">
-                <img src="./assets/java.svg" alt="logo java">
-                <img src="./assets/spring.svg" alt="logo spring">
-                <img src="./assets/html.svg" alt="logo html">
-                <img src="./assets/css.svg" alt="logo css">
-                <img src="./assets/javascript.svg" alt="logo javascript">
+    <a class="skip-link" href="#conteudo">Pular para o conteúdo</a>
+    <canvas id="bg-net" class="bg-net" aria-hidden="true"></canvas>
+
+    <!-- ============================ CABEÇALHO ============================ -->
+    <header class="topbar" id="topbar">
+        <div class="container topbar__inner">
+            <a class="brand" href="#inicio" aria-label="Raul Rotilli, voltar ao início">
+                <span class="brand__mark" aria-hidden="true">R</span>
+                <span>raul<span class="brand__ai">.ai</span></span>
+            </a>
+            <nav class="nav" id="nav" aria-label="Seções">
+                <a href="#sobre">Sobre</a>
+                <a href="#galeria">Galeria neural</a>
+                <a href="#lab">Lab</a>
+                <a href="#raulgpt">RaulGPT</a>
+                <a href="#trajetoria">Trajetória</a>
+                <a href="#contato">Contato</a>
+            </nav>
+            <div class="topbar__actions">
+                <button class="cmdk-btn" type="button" data-open-palette aria-label="Abrir paleta de comandos (Ctrl+K)">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+                    <span class="cmdk-btn__label">Comandos</span>
+                    <kbd>Ctrl K</kbd>
+                </button>
+                <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="nav" aria-label="Abrir menu">
+                    <span></span>
+                </button>
             </div>
-            <div class="apresentacao__links">
-                <h2 class="apresentacao__links__subtitulo">Acesse minhas redes</h2>
-                <a class="apresentacao__links__navegacao" href="https://github.com/Raul-Rotilli" target="_blank">
-                    <img src="./assets/github.png">
-                    GITHUB
-                </a>
-                <a class="apresentacao__links__navegacao" href="https://www.linkedin.com/in/raul-rotilli-aguirre/" target="_blank">
-                    <img src="./assets/linkedin.png">
-                    LINKEDIN
-                </a>
-                <a class="apresentacao__links__navegacao" href="https://www.instagram.com/raulrotilli/" target="_blank">
-                    <img src="./assets/instagram.png">
-                    INSTAGRAM
-                </a>
+        </div>
+    </header>
+
+    <main id="conteudo">
+
+        <!-- ============================ HERO ============================ -->
+        <section id="inicio" class="hero" aria-labelledby="hero-title">
+            <div class="container hero__inner">
+                <div class="hero__copy">
+                    <p class="hero__eyebrow mono"><span class="pulse-dot" aria-hidden="true"></span> modelo <b>raul-rotilli-aguirre</b> · em treinamento contínuo</p>
+                    <h1 id="hero-title" class="hero__title">Raul <span class="grad-text">Rotilli</span><br>Aguirre</h1>
+                    <p class="hero__stream" id="hero-stream">Desenvolvedor em formação com foco em <strong>Inteligência Artificial</strong> e <strong>Machine Learning</strong>, construído sobre uma base sólida de back-end.</p>
+                    <p class="hero__lead">Este portfólio é, ele mesmo, um experimento: o retrato ao lado nasce do ruído, como em um modelo de difusão. Mais abaixo, oito algoritmos de IA e visão computacional transformam meu rosto em arte, ao vivo, no seu navegador.</p>
+                    <div class="hero__cta row">
+                        <a class="btn btn--primary" href="#galeria">
+                            Explorar a galeria neural
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+                        </a>
+                        <a class="btn btn--ghost" href="#raulgpt">Perguntar ao RaulGPT</a>
+                    </div>
+                </div>
+                <div class="hero__visual">
+                    <div id="hero-stage" class="hero__stage" role="img" aria-label="Retrato de Raul Rotilli formado por milhares de partículas que surgem do ruído, como em um modelo de difusão">
+                        <img class="hero__fallback" src="assets/raul-ai.webp" alt="" width="491" height="712">
+                    </div>
+                    <div id="hero-hud" class="hero__hud mono" aria-live="off"></div>
+                </div>
+            </div>
+            <a class="hero__scroll mono" href="#sobre" aria-label="Rolar para a seção Sobre">
+                <span>scroll</span>
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 5v14M6 13l6 6 6-6"/></svg>
+            </a>
+        </section>
+
+        <!-- ============================ SOBRE ============================ -->
+        <section id="sobre" class="section" aria-labelledby="sobre-title">
+            <div class="container grid-2">
+                <div class="about__text" data-reveal>
+                    <p class="kicker"><span class="kicker__index">01</span> Sobre mim</p>
+                    <h2 id="sobre-title">Um dev aprendendo a <span class="grad-text">ensinar máquinas</span>.</h2>
+                    <div class="stack" style="margin-top:28px">
+                        <p>Olá! Meu nome é <strong>Raul Rotilli Aguirre</strong> e sou apaixonado por programação. Tudo começou com o Curso Técnico em Informática, que me despertou para o mundo da TI. Desde então, estou determinado a me tornar um grande desenvolvedor de software.</p>
+                        <p>O programa <strong>Nova Geração</strong> do Instituto Caldeira foi um divisor de águas: foi ali que redescobri minha paixão pela programação. A convivência com pessoas incríveis e talentosas enriqueceu meu conhecimento e me proporcionou um crescimento significativo em todos os aspectos da vida.</p>
+                        <p>Comecei pelo back-end, com <strong>Java</strong> e <strong>Spring</strong>, e agora direciono meus estudos para <strong>Inteligência Artificial e Machine Learning</strong>: dados, modelos que aprendem e produtos inteligentes que resolvem problemas reais.</p>
+                    </div>
+                    <div class="about__photos">
+                        <figure class="sample">
+                            <img src="assets/raul-foto.webp" alt="Raul ao ar livre, com fones de ouvido azuis, sob árvores e céu azul" loading="lazy" width="491" height="712">
+                            <figcaption>amostra_001.webp</figcaption>
+                        </figure>
+                        <figure class="sample">
+                            <img src="assets/raul.jpg" alt="Raul sorrindo, com camisa estampada de folhagens" loading="lazy" width="640" height="640">
+                            <figcaption>amostra_002.jpg</figcaption>
+                        </figure>
+                    </div>
+                </div>
+
+                <aside class="card model-card" data-reveal data-reveal-delay="1" aria-label="Model card de Raul">
+                    <div class="model-card__bar">
+                        <span class="model-card__dots" aria-hidden="true"><i></i><i></i><i></i></span>
+                        <span>model_card.md</span>
+                        <span><span class="pulse-dot" aria-hidden="true"></span> online</span>
+                    </div>
+                    <dl>
+                        <dt>modelo</dt>
+                        <dd>raul-rotilli-aguirre</dd>
+                        <dt>versão</dt>
+                        <dd><span class="mono">v2026.10</span></dd>
+                        <dt>arquitetura</dt>
+                        <dd>Curiosidade × persistência, sobre camadas de back-end</dd>
+                        <dt>dados de treino</dt>
+                        <dd>Técnico em Informática (Senac Tech) · Nova Geração (Instituto Caldeira) · Alura · estágios em TI</dd>
+                        <dt>stack atual</dt>
+                        <dd><span class="tag">Java</span><span class="tag">Spring</span><span class="tag">HTML</span><span class="tag">CSS</span><span class="tag">JavaScript</span></dd>
+                        <dt>em treinamento</dt>
+                        <dd><span class="tag tag--blue">Python</span><span class="tag tag--blue">Machine Learning</span><span class="tag tag--blue">Redes neurais</span><span class="tag tag--blue">LLMs</span></dd>
+                        <dt>tarefa</dt>
+                        <dd>Transformar dados em software que aprende</dd>
+                        <dt>limitações</dt>
+                        <dd class="muted">A acurácia cai sem café ☕</dd>
+                    </dl>
+                </aside>
+            </div>
+        </section>
+
+        <!-- ============================ GALERIA NEURAL ============================ -->
+        <section id="galeria" class="section" aria-labelledby="galeria-title">
+            <div class="container">
+                <div class="section__head" data-reveal>
+                    <p class="kicker"><span class="kicker__index">02</span> Galeria neural</p>
+                    <h2 id="galeria-title">Oito retratos. <span class="grad-text">Um só rosto.</span></h2>
+                    <p class="section__lead">Cada obra é gerada em tempo real a partir da minha foto por um algoritmo clássico de IA, visão computacional ou álgebra linear. Mexa nos parâmetros, segure para comparar com o original e baixe a sua favorita.</p>
+                </div>
+                <div id="gallery-root" class="gallery" data-reveal>
+                    <noscript><p class="noscript-note">Ative o JavaScript para gerar as obras ao vivo.</p></noscript>
+                </div>
+            </div>
+        </section>
+
+        <!-- ============================ LAB ============================ -->
+        <section id="lab" class="section" aria-labelledby="lab-title">
+            <div class="container">
+                <div class="section__head" data-reveal>
+                    <p class="kicker"><span class="kicker__index">03</span> Lab</p>
+                    <h2 id="lab-title">Uma rede neural <span class="grad-text">treinando na sua frente</span>.</h2>
+                    <p class="section__lead">Sem bibliotecas: forward pass, backpropagation e descida do gradiente escritos do zero em JavaScript. Escolha um dataset, ajuste a arquitetura e veja a fronteira de decisão se formar.</p>
+                </div>
+                <div id="playground-root" class="playground" data-reveal>
+                    <noscript><p class="noscript-note">Ative o JavaScript para treinar a rede neural.</p></noscript>
+                </div>
+                <div class="section__head" style="margin-top:clamp(64px,9vw,110px)" data-reveal>
+                    <h3 class="lab__subtitle">Corrida de otimizadores</h3>
+                    <p class="section__lead">SGD, Momentum, RMSProp e Adam descendo a mesma superfície de perda. Clique no mapa para escolher o ponto de partida.</p>
+                </div>
+                <div id="optimizers-root" class="optimizers" data-reveal></div>
+            </div>
+        </section>
+
+        <!-- ============================ RAULGPT ============================ -->
+        <section id="raulgpt" class="section" aria-labelledby="raulgpt-title">
+            <div class="container">
+                <div class="section__head" data-reveal>
+                    <p class="kicker"><span class="kicker__index">04</span> RaulGPT</p>
+                    <h2 id="raulgpt-title">Pergunte qualquer coisa <span class="grad-text">sobre mim</span>.</h2>
+                    <p class="section__lead">Um mini <abbr title="Retrieval-Augmented Generation">RAG</abbr> que roda 100% no seu navegador, sem API: sua pergunta vira um vetor TF-IDF, a similaridade de cosseno encontra os trechos mais relevantes da minha base de conhecimento e a resposta é montada a partir deles.</p>
+                </div>
+                <div id="raulgpt-root" class="raulgpt" data-reveal>
+                    <noscript><p class="noscript-note">Ative o JavaScript para conversar com o RaulGPT.</p></noscript>
+                </div>
+            </div>
+        </section>
+
+        <!-- ============================ TRAJETÓRIA ============================ -->
+        <section id="trajetoria" class="section" aria-labelledby="trajetoria-title">
+            <div class="container">
+                <div class="section__head" data-reveal>
+                    <p class="kicker"><span class="kicker__index">05</span> Trajetória</p>
+                    <h2 id="trajetoria-title">Log de treinamento: <span class="grad-text">a perda só cai</span>.</h2>
+                    <p class="section__lead">Experiências e estudos registrados como épocas de treino. Cada etapa reduziu um pouco o erro e me aproximou do objetivo.</p>
+                </div>
+
+                <div class="timeline" id="timeline-root">
+                    <ol class="timeline__list">
+                        <li class="epoch" data-epoch="1" data-loss="0.92" data-reveal>
+                            <p class="epoch__meta mono">época 01 · 2020 – 2023</p>
+                            <h3 class="epoch__title">Curso Técnico em Informática</h3>
+                            <p class="epoch__org">Senac Tech</p>
+                            <p class="epoch__text">A porta de entrada para o mundo da TI: fundamentos de computação, redes e lógica de programação.</p>
+                        </li>
+                        <li class="epoch" data-epoch="2" data-loss="0.71" data-reveal>
+                            <p class="epoch__meta mono">época 02 · estágio</p>
+                            <h3 class="epoch__title">Estagiário de TI</h3>
+                            <p class="epoch__org">Metha Informática Ltda</p>
+                            <p class="epoch__text">Manutenção de hardware e software no dia a dia de clientes reais.</p>
+                        </li>
+                        <li class="epoch" data-epoch="3" data-loss="0.55" data-reveal>
+                            <p class="epoch__meta mono">época 03 · estágio</p>
+                            <h3 class="epoch__title">Estagiário de TI</h3>
+                            <p class="epoch__org">Secretaria Municipal de Cultura de Porto Alegre</p>
+                            <p class="epoch__text">Administração do setor de informática local, abertura de ordens de serviço de manutenção de hardware e software e execução das manutenções necessárias.</p>
+                        </li>
+                        <li class="epoch" data-epoch="4" data-loss="0.34" data-reveal>
+                            <p class="epoch__meta mono">época 04 · 2023</p>
+                            <h3 class="epoch__title">Programa Nova Geração</h3>
+                            <p class="epoch__org">Instituto Caldeira</p>
+                            <p class="epoch__text">Três meses de networking, treinamento de soft skills e formação em programação pela Alura, incluindo a trilha de programação do Instituto Caldeira e o curso <em>Comunicação assertiva: reduzindo conflitos e frustrações</em>.</p>
+                        </li>
+                        <li class="epoch epoch--current" data-epoch="5" data-loss="0.18" data-reveal>
+                            <p class="epoch__meta mono">época 05 · agora</p>
+                            <h3 class="epoch__title">Foco em IA &amp; Machine Learning</h3>
+                            <p class="epoch__org">Treinamento contínuo</p>
+                            <p class="epoch__text">Python, ciência de dados, redes neurais e LLMs, aplicando a base de back-end para levar modelos do notebook para a produção.</p>
+                        </li>
+                    </ol>
+                </div>
+
+                <div class="section__head" style="margin-top:clamp(64px,9vw,110px)" data-reveal>
+                    <h3 class="lab__subtitle">Espaço de embeddings das minhas habilidades</h3>
+                    <p class="section__lead">Habilidades parecidas ficam próximas no espaço vetorial. Passe o mouse (ou toque) para explorar os vizinhos mais próximos.</p>
+                </div>
+                <div id="embedding-root" class="embedding" data-reveal>
+                    <ul class="embedding__fallback">
+                        <li>Back-end: Java, Spring</li>
+                        <li>Web: HTML, CSS, JavaScript</li>
+                        <li>IA &amp; ML (em treinamento): Python, NumPy, Pandas, scikit-learn, PyTorch, LLMs &amp; RAG</li>
+                        <li>Infra &amp; suporte: hardware, redes, manutenção</li>
+                        <li>Soft skills: comunicação assertiva, trabalho em equipe, networking</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- ============================ CONTATO ============================ -->
+        <section id="contato" class="section contact" aria-labelledby="contato-title">
+            <div class="container">
+                <div class="section__head" data-reveal>
+                    <p class="kicker"><span class="kicker__index">06</span> Contato</p>
+                    <h2 id="contato-title" class="contact__title">Vamos <span class="grad-text">treinar</span> algo juntos?</h2>
+                    <p class="section__lead" style="margin-inline:auto">Estou aberto a oportunidades, projetos e boas conversas sobre IA, dados e desenvolvimento.</p>
+                </div>
+                <div class="contact__links" data-reveal>
+                    <a class="contact__link" href="https://github.com/Raul-Rotilli" target="_blank" rel="noopener noreferrer">
+                        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 .5C5.73.5.5 5.73.5 12c0 5.08 3.29 9.38 7.86 10.9.58.1.79-.25.79-.56v-2c-3.2.7-3.87-1.37-3.87-1.37-.52-1.33-1.28-1.69-1.28-1.69-1.04-.71.08-.7.08-.7 1.15.08 1.76 1.18 1.76 1.18 1.03 1.76 2.69 1.25 3.35.96.1-.75.4-1.25.73-1.54-2.55-.29-5.24-1.28-5.24-5.68 0-1.26.45-2.28 1.18-3.09-.12-.29-.51-1.46.11-3.04 0 0 .97-.31 3.17 1.18a11 11 0 0 1 5.77 0c2.2-1.49 3.17-1.18 3.17-1.18.62 1.58.23 2.75.11 3.04.74.81 1.18 1.83 1.18 3.09 0 4.41-2.69 5.39-5.26 5.67.41.36.78 1.06.78 2.14v3.17c0 .31.21.67.8.56A11.5 11.5 0 0 0 23.5 12C23.5 5.73 18.27.5 12 .5z"/></svg>
+                        <span>GitHub<small>@Raul-Rotilli</small></span>
+                    </a>
+                    <a class="contact__link" href="https://www.linkedin.com/in/raul-rotilli-aguirre/" target="_blank" rel="noopener noreferrer">
+                        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="2" y="9" width="4" height="12" rx="1"/><circle cx="4" cy="4" r="2"/><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-4 0v7h-4V9h4v1.5A5 5 0 0 1 16 8z"/></svg>
+                        <span>LinkedIn<small>raul-rotilli-aguirre</small></span>
+                    </a>
+                    <a class="contact__link" href="https://www.instagram.com/raulrotilli/" target="_blank" rel="noopener noreferrer">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="2.5" y="2.5" width="19" height="19" rx="5.5"/><circle cx="12" cy="12" r="4.2"/><path d="M17.6 6.4h.01"/></svg>
+                        <span>Instagram<small>@raulrotilli</small></span>
+                    </a>
+                </div>
+                <p class="contact__terminal" data-reveal><span class="prompt">raul@ai:~$</span> python deploy.py --oportunidade "sua-empresa"<br><span class="muted"># aguardando o seu contato…</span></p>
             </div>
         </section>
     </main>
-    <footer class="rodape">
-        <p>Desenvolvido por Raul Rotilli Aguirre &#169</p>
+
+    <footer class="footer">
+        <div class="container footer__inner">
+            <p>Desenvolvido por Raul Rotilli Aguirre © <span id="year">2026</span></p>
+            <p class="footer__palette" title="Cores extraídas da foto com k-means (k = 4)">
+                paleta via k-means
+                <i style="background:#161316"></i><i style="background:#2651c6"></i><i style="background:#ca795d"></i><i style="background:#eca289"></i>
+            </p>
+            <p>Pressione <kbd>Ctrl</kbd> <kbd>K</kbd> para comandos</p>
+        </div>
     </footer>
+
+    <div id="palette-root"></div>
+
+    <!-- dados + utilitários -->
+    <script src="js/portrait-data.js"></script>
+    <script src="js/core.js"></script>
+    <!-- obras da galeria (cada arquivo chama RR.art.register) -->
+    <script src="js/art/kmeans.js"></script>
+    <script src="js/art/convolution.js"></script>
+    <script src="js/art/svd.js"></script>
+    <script src="js/art/ascii.js"></script>
+    <script src="js/art/delaunay.js"></script>
+    <script src="js/art/stipple.js"></script>
+    <script src="js/art/flowfield.js"></script>
+    <script src="js/art/dither.js"></script>
+    <!-- módulos -->
+    <script src="js/gallery.js"></script>
+    <script src="js/hero.js"></script>
+    <script src="js/playground.js"></script>
+    <script src="js/optimizers.js"></script>
+    <script src="js/raulgpt.js"></script>
+    <script src="js/timeline.js"></script>
+    <script src="js/bg-net.js"></script>
+    <script src="js/palette.js"></script>
+    <script src="js/main.js"></script>
 </body>
 
 </html>
