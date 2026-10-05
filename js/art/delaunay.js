@@ -14,6 +14,8 @@
 
   var FACE_X = 250 / 491, FACE_Y = 330 / 712;   // centro do rosto (fração da foto)
   var REVEAL_MS = 900;                           // duração da onda
+  var SLICE_MS = 10;                             // orçamento de cálculo por quadro
+  var MORE = 'more';                             // etapa fatiada ainda não terminou
   var NEON_BG = '#05070f';
   var EPSILON = Math.pow(2, -52);
   var EDGE_STACK = new Uint32Array(1024);
@@ -334,32 +336,41 @@
         }
 
         /* etapa 2 — pontos: moldura (por fora da tela, para a malha cobrir tudo) + dardos
-           com raio variável (disco de Poisson adaptativo à densidade) */
-        function stagePoints() {
-          var target = thumb ? RR.clamp(Math.round(p.pontos * 0.22), 160, 520) : RR.clamp(Math.round(p.pontos) || 1600, 100, 6000);
-          var nbx = thumb ? 4 : 7, nby = Math.round(nbx * H / W);
-          for (i = 0; i <= nbx; i++) {
-            var bx = i / nbx * (W + 2) - 1 + (i > 0 && i < nbx ? (rand() - 0.5) * W / nbx * 0.5 : 0);
-            pts.push(bx, -1 - rand() * 0.6, bx, H + 1 + rand() * 0.6);
+           com raio variável (disco de Poisson adaptativo à densidade). Fatiada por orçamento
+           de tempo: o estado fica no fechamento e cada chamada continua de onde parou. */
+        var target, inner, total, rMin, rMax, kR, cs, gw, gh, head, nxt, pass = 0, att = 0, maxAtt = 0, pInit = false;
+        function insert(px, py) {
+          var c = (((py + 4) / cs) | 0) * gw + (((px + 4) / cs) | 0);
+          nxt[count] = head[c]; head[c] = count; count++;
+        }
+        function stagePoints(budget) {
+          var t0 = performance.now();
+          if (!pInit) {
+            pInit = true;
+            target = thumb ? RR.clamp(Math.round(p.pontos * 0.22), 160, 520) : RR.clamp(Math.round(p.pontos) || 1600, 100, 6000);
+            var nbx = thumb ? 4 : 7, nby = Math.round(nbx * H / W);
+            for (i = 0; i <= nbx; i++) {
+              var bx = i / nbx * (W + 2) - 1 + (i > 0 && i < nbx ? (rand() - 0.5) * W / nbx * 0.5 : 0);
+              pts.push(bx, -1 - rand() * 0.6, bx, H + 1 + rand() * 0.6);
+            }
+            for (i = 1; i < nby; i++) {
+              var by = i / nby * (H + 2) - 1 + (rand() - 0.5) * H / nby * 0.5;
+              pts.push(-1 - rand() * 0.6, by, W + 1 + rand() * 0.6, by);
+            }
+            var nBorder = pts.length / 2;
+            inner = Math.max(10, target - nBorder);
+            total = nBorder + inner;
+            rMin = thumb ? 0.55 : 1.2; rMax = W * 0.085;
+            kR = Math.sqrt(0.62 * sum * sx * sy / inner);
+            cs = Math.max(thumb ? 1 : 1.6, kR / Math.sqrt(dmax));
+            gw = Math.ceil((W + 8) / cs) + 1; gh = Math.ceil((H + 8) / cs) + 1;
+            head = new Int32Array(gw * gh).fill(-1); nxt = new Int32Array(total + 8);
+            for (i = 0; i < nBorder; i++) insert(pts[2 * i], pts[2 * i + 1]);
+            maxAtt = inner * 28;
           }
-          for (i = 1; i < nby; i++) {
-            var by = i / nby * (H + 2) - 1 + (rand() - 0.5) * H / nby * 0.5;
-            pts.push(-1 - rand() * 0.6, by, W + 1 + rand() * 0.6, by);
-          }
-          var nBorder = pts.length / 2, inner = Math.max(10, target - nBorder);
-          var rMin = thumb ? 0.55 : 1.2, rMax = W * 0.085;
-          var kR = Math.sqrt(0.62 * sum * sx * sy / inner);
-          var cs = Math.max(thumb ? 1 : 1.6, kR / Math.sqrt(dmax));
-          var gw = Math.ceil((W + 8) / cs) + 1, gh = Math.ceil((H + 8) / cs) + 1;
-          var head = new Int32Array(gw * gh).fill(-1), nxt = new Int32Array(nBorder + inner + 8);
-          function insert(px, py) {
-            var c = (((py + 4) / cs) | 0) * gw + (((px + 4) / cs) | 0);
-            nxt[count] = head[c]; head[c] = count; count++;
-          }
-          for (i = 0; i < nBorder; i++) insert(pts[2 * i], pts[2 * i + 1]);
-          var total = nBorder + inner;
-          for (var pass = 0; pass < 4 && count < total; pass++) {
-            for (var att = 0, maxAtt = inner * 28; att < maxAtt && count < total; att++) {
+          while (pass < 4 && count < total) {
+            while (att < maxAtt && count < total) {
+              att++;
               var u = rand() * sum, lo = 0, hi = n - 1;
               while (lo < hi) { var mid = (lo + hi) >> 1; if (cdf[mid] < u) lo = mid + 1; else hi = mid; }
               var cx = ((lo % sw) + rand()) * sx, cy = (((lo / sw) | 0) + rand()) * sy;
@@ -376,23 +387,34 @@
                 }
               }
               if (ok) { pts.push(cx, cy); insert(cx, cy); }
+              if ((att & 511) === 0 && performance.now() - t0 > budget) return MORE;
             }
             kR *= 0.86;                               // ainda faltam pontos: raio menor
+            pass++; att = 0;
           }
+          head = nxt = null;
+          return true;
         }
 
         /* etapa 3 — triangulação e cor média de cada face */
-        function stageMesh() {
-          coords = new Float64Array(pts);
-          var dt = delaunay(coords);
-          if (!dt) return false;
-          T = dt.triangles; HE = dt.halfedges; m = T.length / 3;
+        var meshT = -1;
+        function stageMesh(budget) {
+          var t0 = performance.now();
+          if (meshT < 0) {
+            coords = new Float64Array(pts);
+            var dt = delaunay(coords);
+            if (!dt) return false;
+            T = dt.triangles; HE = dt.halfedges; m = T.length / 3;
+            col = new Uint8ClampedArray(m * 3); fg = new Uint8Array(m); lumT = new Float32Array(m);
+            cenX = new Float32Array(m); cenY = new Float32Array(m);
+            meshT = 0;
+            if (performance.now() - t0 > budget * 0.6) return MORE;
+          }
 
           /* cor média por face: rasteriza cada triângulo sobre os pixels da fonte */
           var cd = csrc.data, cw = csrc.width, ch = csrc.height, kx = cw / W, ky = ch / H;
-          col = new Uint8ClampedArray(m * 3); fg = new Uint8Array(m); lumT = new Float32Array(m);
-          cenX = new Float32Array(m); cenY = new Float32Array(m);
-          for (var t = 0; t < m; t++) {
+          for (var t = meshT; t < m; t++) {
+            if ((t & 63) === 63 && performance.now() - t0 > budget) { meshT = t; return MORE; }
             var a0 = T[3 * t], a1 = T[3 * t + 1], a2 = T[3 * t + 2];
             var x0 = coords[2 * a0] * kx, y0 = coords[2 * a0 + 1] * ky;
             var x1 = coords[2 * a1] * kx, y1 = coords[2 * a1 + 1] * ky;
@@ -428,6 +450,8 @@
               fg[t] = 1;
             }
           }
+          meshT = m;
+          return true;
         }
 
         /* etapa 4 — estilos, ordem da onda e desenho incremental: cada face cresce no
@@ -585,13 +609,15 @@
         var stages = [stagePoints, stageMesh, stageDraw], si = 0;
         env.setInfo('amostrando pontos por importância…');
         if (thumb) {
-          for (; si < stages.length; si++) if (stages[si]() === false) return;
+          for (; si < stages.length; si++) if (stages[si](Infinity) === false) return;
           return;
         }
-        /* preparo fatiado: uma etapa por quadro (nada trava a página) */
+        /* preparo fatiado em quadros de ~SLICE_MS (nada trava a página) */
         function prep() {
           if (env.cancelled()) return;
-          if (stages[si++]() === false) return;
+          var r = stages[si](SLICE_MS);
+          if (r === false) return;
+          if (r !== MORE && ++si === 1) env.setInfo('triangulando ' + RR.fmt(count) + ' pontos…');
           if (si < stages.length) env.frame(prep);
         }
         env.frame(prep);

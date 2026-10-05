@@ -101,7 +101,12 @@
       var layers = LAYERS[style];
       var S = thumb ? 1500 : RR.clamp(Math.round(p.tracos) || 12000, 200, 60000);
       var unit = thumb ? 0.42 : W / 420;                       // escala das larguras
-      var lenPx = RR.clamp(Number(p.comprimento) || 22, 2, 120) * (thumb ? 0.36 : W / 420);
+      var lenRaw = RR.clamp(Number(p.comprimento) || 22, 2, 120), lenPx = lenRaw * (thumb ? 0.36 : W / 420);
+      /* tinta por traço compensa a cobertura (néon e nanquim são translúcidos):
+         poucos traços curtos ficam mais opacos; muitos e longos, mais leves */
+      var cover = (S / 12000) * (lenRaw / 22);                  // cobertura relativa ao padrão
+      var inkMul = thumb ? 1 : style === 'neon' ? RR.clamp(Math.pow(cover, -0.85), 0.15, 3)   // soma aditiva satura rápido
+        : RR.clamp(Math.pow(cover, -0.5), 0.6, 3);
       var rand = RR.rng((env.seed >>> 0) * 3266489917 + 11);
       var dpr = ctx.canvas.width / W;
 
@@ -160,7 +165,9 @@
           var lo = percentile(L, A, 0.02), hi = percentile(L, A, 0.98);
           if (hi - lo < 0.05) { lo = 0; hi = 1; }
           for (i = 0; i < n; i++) T[i] = RR.clamp((L[i] - lo) / (hi - lo), 0, 1);
-          var Lb = blur(L, w, h, 1, 2);
+        }
+        function stageSobel() {
+          var i, x, y, Lb = blur(L, w, h, 1, 2);
           Jxx = new Float32Array(n); Jxy = new Float32Array(n); Jyy = new Float32Array(n); E = new Float32Array(n);
           for (y = 1; y < h - 1; y++) {
             for (x = 1; x < w - 1; x++) {
@@ -176,10 +183,12 @@
 
         /* etapa 2: tensor suavizado -> isofotas em ângulo dobrado (Jyy − Jxx, −2·Jxy),
            misturadas a um campo de ruído suave (grade grossa interpolada) onde o gradiente é fraco */
-        function stageField() {
-          var r2 = thumb ? 2 : Math.max(2, Math.round(w / 90)), i, x, y;
+        function stageTensor() {
+          var r2 = thumb ? 2 : Math.max(2, Math.round(w / 90));
           Jxx = blur(Jxx, w, h, r2, 2); Jxy = blur(Jxy, w, h, r2, 2); Jyy = blur(Jyy, w, h, r2, 2);
-          var coh = new Float32Array(n);
+        }
+        function stageField() {
+          var i, x, y, coh = new Float32Array(n);
           for (i = 0; i < n; i++) {
             var vx = Jyy[i] - Jxx[i], vy = -2 * Jxy[i];
             coh[i] = Math.sqrt(vx * vx + vy * vy);
@@ -241,14 +250,16 @@
         }
 
         /* etapa 3: sorteia as pinceladas de cada camada (nascimento ponderado por borda/escuridão) */
-        function stagePlan() {
+        function stageOpaque() {
           var i, list = [];
           for (i = 0; i < n; i++) if (A[i] > 0.6) list.push(i);
           opq = new Int32Array(list);
           plan = [];                                               // [x, y, camada, ...]
-          if (!opq.length) return;
-          layers.forEach(function (ly, li) {
-            var count = Math.round(S * ly.frac), k = 0, tries = 0;
+        }
+        function planLayer(li) {
+          return function () {
+            if (!opq.length) return;
+            var ly = layers[li], count = Math.round(S * ly.frac), k = 0, tries = 0;
             if (ly.grid) {
               /* subpintura: grade com jitter cobre todo o retrato, em ordem aleatória */
               var cell = Math.sqrt(opq.length / (kx * ky) / count), cells = [];
@@ -262,7 +273,13 @@
                 var r = (rand() * (q + 1)) | 0, t0 = cells[2 * q], t1 = cells[2 * q + 1];
                 cells[2 * q] = cells[2 * r]; cells[2 * q + 1] = cells[2 * r + 1]; cells[2 * r] = t0; cells[2 * r + 1] = t1;
               }
-              for (q = 0; q < cells.length; q += 2) plan.push(cells[q], cells[q + 1], li);
+              /* exatamente "count" pinceladas: corta o excesso ou completa com sorteios */
+              for (q = 0; q < cells.length && k < count; q += 2, k++) plan.push(cells[q], cells[q + 1], li);
+              for (; k < count; k++) {
+                var id0 = opq[(rand() * opq.length) | 0];
+                plan.push(((id0 % w) + rand()) / kx, (((id0 / w) | 0) + rand()) / ky, li);
+              }
+              total = plan.length / 3;
               return;
             }
             while (k < count && tries < count * 40) {
@@ -275,8 +292,8 @@
               plan.push(((id % w) + rand()) / kx, (((id / w) | 0) + rand()) / ky, li);
               k++;
             }
-          });
-          total = plan.length / 3;
+            total = plan.length / 3;
+          };
         }
 
         /* subpintura do óleo: a foto bem desfocada e escurecida, recortada pela
@@ -351,13 +368,13 @@
           if (style === 'nanquim') {
             var d = 1 - T[j];
             var al = (0.04 + 0.62 * Math.pow(d, 1.7)) * (ly.cross ? 0.75 : 1) + (ly.edge > 0.5 ? 0.3 * E[j] : 0);
-            return 'rgba(24,20,16,' + Math.min(0.85, al).toFixed(3) + ')';
+            return 'rgba(24,20,16,' + Math.min(0.85, al * inkMul).toFixed(3) + ')';
           }
           if (style === 'neon') {
             var warm = RR.clamp((r - b) / 110, 0, 1), t = RR.clamp((L[j] - 0.04) / 0.82, 0, 1);
             var midC = mix(BLUE, PINK, warm * 0.85);
             var cc = t < 0.5 ? mix(DEEP, midC, t / 0.5) : mix(midC, MINT, (t - 0.5) / 0.5);
-            var na = 0.06 + 0.34 * Math.pow(t, 1.3);
+            var na = Math.min(1, (0.06 + 0.34 * Math.pow(t, 1.3)) * inkMul);
             return 'rgba(' + (cc[0] | 0) + ',' + (cc[1] | 0) + ',' + (cc[2] | 0) + ',' + na.toFixed(3) + ')';
           }
           /* óleo: cor da foto com variação de tinta e um pouco mais de saturação */
@@ -426,7 +443,10 @@
           infoLine(true);
         }
 
-        var stages = [stageGradient, stageField, stagePlan, stageSurface];
+        /* etapas curtas (cada uma cabe num quadro) */
+        var stages = [stageGradient, stageSobel, stageTensor, stageField, stageOpaque];
+        layers.forEach(function (ly, li) { stages.push(planLayer(li)); });
+        stages.push(stageSurface);
         if (thumb) {
           stages.forEach(function (fn) { fn(); });
           for (var q0 = 0; q0 < total; q0++) paintOne(q0);

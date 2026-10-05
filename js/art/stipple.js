@@ -17,7 +17,7 @@
   var PAPER = '#f0e9dc';               // papel quente: tinta escura lê melhor olhos, barba e cabelo
   var INK = '#191a24';
   var FLOOR = 0.02;                    // densidade mínima dentro do retrato
-  var GAMMA = 1.5;                     // contraste da densidade
+  var GAMMA = 1.25;                    // contraste da densidade
   var RIM = 0.42;                      // densidade na borda da silhueta
   var SLICE_MS = 7;                    // orçamento de cálculo por quadro (sobra tempo para desenhar)
   var SLICE_RM = 11;                   // sem animação: só cálculo
@@ -109,15 +109,15 @@
 
         /* tom: brilho normalizado + máscara de nitidez (realça olhos, sobrancelhas e barba);
            o fundo transparente conta como papel (claro) */
-        var tone = new Float32Array(n), soft = new Float32Array(n), tmp = new Float32Array(n), R = thumb ? 2 : 4;
+        var tone = new Float32Array(n), soft = new Float32Array(n), tmp = new Float32Array(n), R = thumb ? 2 : 7;
         for (i = 0; i < n; i++) tone[i] = data[i * 4 + 3] > 5 ? RR.clamp((lum[i] - lo) / (hi - lo), 0, 1) : 1;
         boxBlur(tone, tmp, soft, w, h, R);
-        /* densidade = escuridão^1,5 (tinta sobre papel), suavizada 3×3 */
+        /* densidade = escuridão^1,25 (tinta sobre papel), suavizada (picos estreitos viram "estrelas" no Lloyd) */
         var raw = new Float32Array(n);
         for (i = 0; i < n; i++) {
           var a = data[i * 4 + 3] / 255;
           if (a < 0.02) continue;
-          var t = 1 - RR.clamp(tone[i] + 0.7 * (tone[i] - soft[i]), 0, 1);
+          var t = 1 - RR.clamp(tone[i] + 1.15 * (tone[i] - soft[i]), 0, 1);
           raw[i] = (FLOOR + (1 - FLOOR) * t * Math.pow(t, GAMMA - 1)) * a;
         }
         /* contorno: uma linha de pontos desenha a silhueta (a pele clara não se perde no papel) */
@@ -130,7 +130,7 @@
           }
         }
         var den = new Float32Array(n), dmax = 0;
-        boxBlur(raw, tmp, den, w, h, 1);
+        boxBlur(raw, tmp, den, w, h, thumb ? 1 : 2);
         for (i = 0; i < n; i++) {
           if (raw[i] <= 0) den[i] = 0;
           else if (den[i] > dmax) dmax = den[i];
@@ -270,7 +270,7 @@
         }
         function info(it, disp) {
           env.setInfo('iteração ' + it + '/' + iters + ' · ' + RR.fmt(N) + ' pontos · ' +
-            (it === 0 ? 'amostragem inicial' : 'deslocamento médio ' + RR.fmt(disp, 2) + ' px'));
+            (it === 0 ? 'amostragem inicial' : 'deslocamento médio ' + disp.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' px'));
         }
 
         /* estado das iterações (fatiadas) */
@@ -315,7 +315,7 @@
         /* animação: snapshots por iteração; a tela interpola linearmente entre eles */
         draw(X);
         var from = new Float32Array(X), to = from, disp = new Float32Array(2 * N);
-        var queue = [], tStart = -1, dur = HOLD_MS, shownIter = 0;
+        var queue = [], tStart = -1, dur = HOLD_MS, shownIter = 0, drawMs = 4;
         var stepMs = RR.clamp(1500 / iters, 55, 170);
         function frame(ts) {
           if (env.cancelled()) return;
@@ -327,13 +327,15 @@
             info(nx.it, nx.d);
           }
           /* calcula a próxima iteração enquanto a fila tem espaço */
-          if (iter < iters && queue.length < 2 && compute(SLICE_MS, true)) {
+          if (iter < iters && queue.length < 2 && compute(RR.clamp(11 - drawMs, 3, SLICE_MS), true)) {
             queue.push({ P: new Float32Array(X), it: iter, d: lastDisp });
           }
           var k = Math.min(1, (ts - tStart) / dur);
           if (from !== to) {
             for (var q = 0; q < 2 * N; q++) disp[q] = from[q] + (to[q] - from[q]) * k;
+            var td = performance.now();
             draw(k >= 1 ? to : disp);
+            drawMs = performance.now() - td;
             if (k >= 1) from = to;
           }
           if (iter < iters || queue.length || shownIter < iters || from !== to) env.frame(frame);
