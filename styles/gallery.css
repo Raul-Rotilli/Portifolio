@@ -211,6 +211,8 @@
   font-size: 0.76rem; line-height: 1.5; color: var(--text-2); overflow-wrap: anywhere;
 }
 .gallery .gallery__info::before { content: '›'; color: var(--mint); font-weight: 600; flex: none; }
+/* em telas estreitas a linha de status costuma quebrar em 2 linhas: reserva a altura para não empurrar a página */
+@media (max-width: 560px) { .gallery .gallery__info { min-height: 58px; } }
 
 .gallery .gallery__keys { margin-top: auto; font-size: 0.78rem; color: var(--muted); line-height: 1.8; }
 .gallery .gallery__keys kbd { font-size: 0.72rem; }

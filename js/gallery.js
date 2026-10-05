@@ -37,6 +37,8 @@
   var dom = {};
   var pal = null;
   var inited = false, visible = false, userActed = false;
+  /* deferred: estrutura montada no carregamento (sem salto de layout), render só quando a galeria aparece */
+  var deferred = false;
 
   var token = 0;            // token do render atual
   var buf = null;           // {canvas, ctx} do render atual
@@ -456,6 +458,7 @@
   }
 
   function render() {
+    if (deferred) return;
     var p = pieces[cur];
     if (!p) return;
     clearTimeout(paramTimer);
@@ -846,15 +849,17 @@
     if (thumbsStarted && !thumbBusy) pumpThumbs();
   }, 30);
 
-  function init() {
-    if (inited) return;
+  function init(deferRender) {
+    if (inited) { if (!deferRender) start(); return; }
     inited = true;
+    deferred = !!deferRender;
     build();
     pieces = collect();
     syncStrip();
 
     RR.whenVisible(root, function () { visible = true; resumeFrames(); }, function () { visible = false; });
-    visible = true;   // init roda quando a galeria aparece (ou por pedido explícito)
+    if (!deferred) visible = true;   // init imediato: a galeria aparece agora (ou houve pedido explícito)
+    else measure();                  // reserva a altura do palco antes do primeiro render
 
     if ('ResizeObserver' in window) new ResizeObserver(RR.debounce(onResize, 140)).observe(dom.stage);
     window.addEventListener('resize', RR.debounce(onResize, 160));
@@ -868,9 +873,17 @@
       dom.compare.disabled = dom.prev.disabled = dom.next.disabled = true;
       return;
     }
-    var start = pendingId ? indexOf(pendingId) : -1;
+    var first = pendingId ? indexOf(pendingId) : -1;
     pendingId = null;
-    select(start >= 0 ? start : 0);
+    select(first >= 0 ? first : 0);
+  }
+
+  /* sai do modo adiado e faz o primeiro render */
+  function start() {
+    if (!deferred) return;
+    deferred = false;
+    visible = true;
+    render();
   }
 
   function scrollToGallery() {
@@ -886,6 +899,7 @@
       var i = indexOf(id);
       if (i >= 0) { userActed = true; select(i, { user: true }); } else pendingId = id;
     }
+    start();
     if (scroll) scrollToGallery();
   }
 
@@ -907,6 +921,9 @@
   RR.ready(function () {
     var id = readHash();
     if (id) requestPiece(id, true);
-    else RR.onFirstVisible(root, init, { rootMargin: '300px 0px' });
+    else {
+      init(true);
+      RR.onFirstVisible(root, start, { rootMargin: '300px 0px' });
+    }
   });
 })();

@@ -246,10 +246,9 @@
     return (n < 0 && +s.replace(',', '.') !== 0 ? '−' : '') + s;
   }
   function pct(n) { return isFinite(n) ? Math.round(n * 100) + '%' : '—'; }
+  /* inteiro simples com separador de milhar pt-BR (ex.: 1.024) */
   function epochStr(e) {
-    var s = String(Math.min(e, 999999));
-    while (s.length < 6) s = '0' + s;
-    return s.slice(0, 3) + '.' + s.slice(3);
+    return RR.fmt(Math.min(e, 999999), 0);
   }
   function lrLabel(v) { return String(v).replace('.', ','); }
 
@@ -541,9 +540,7 @@
     buildColHeads();
   }
   function updateHud() {
-    var e = epochStr(state.epoch), m = /^[0.]*/.exec(e)[0];
-    if (m.length === e.length) m = e.slice(0, -1); // época 0: o último dígito fica visível
-    ui.sEpoch.innerHTML = '<span class="pg__zeros" aria-hidden="true">' + m + '</span>' + e.slice(m.length);
+    ui.sEpoch.textContent = epochStr(state.epoch);
     ui.sTr.textContent = fx(stats.trLoss, 3);
     ui.sTe.textContent = fx(stats.teLoss, 3);
     ui.sAcc.textContent = pct(stats.teAcc);
@@ -1124,6 +1121,7 @@
     build();
     resetNet();
     updateDatasetUI(); updateCustomUI(); updateHud();
+    layout();   // dimensiona os canvas já no carregamento: sem salto de layout quando o módulo inicia
 
     RR.whenVisible(root, function () { visible = true; syncLoop(); }, function () { visible = false; syncLoop(); });
     RR.onFirstVisible(root, init);

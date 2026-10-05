@@ -80,7 +80,6 @@
   font-variant-numeric: tabular-nums; letter-spacing: -0.01em;
 }
 .playground .pg__stat:last-child .pg__statval { color: var(--mint); }
-.playground .pg__zeros { color: rgba(142, 149, 178, 0.45); }
 
 /* ---------- grade das zonas ---------- */
 .playground .pg__grid { display: grid; grid-template-columns: minmax(0, 1fr); }
