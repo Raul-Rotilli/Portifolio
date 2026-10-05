@@ -326,7 +326,7 @@ input[type='text']:focus, input[type='search']:focus, textarea:focus { outline: 
   position: relative; width: 132px; border-radius: 12px; overflow: hidden; border: 1px solid var(--line-strong);
   background: var(--art-bg); margin: 0;
 }
-.sample img { width: 100%; aspect-ratio: 1; object-fit: cover; object-position: center 22%; }
+.sample img { width: 100%; height: auto; aspect-ratio: 1; object-fit: cover; object-position: center 30%; }
 .sample figcaption {
   padding: 6px 8px; font-family: var(--font-mono); font-size: 0.68rem; color: var(--muted);
   border-top: 1px solid var(--line); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
