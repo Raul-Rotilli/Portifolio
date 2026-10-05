@@ -75,16 +75,13 @@
 
   /* ---------- ações utilitárias ---------- */
   function scrollToId(id, opts) {
+    // main.js oferece a rolagem que se corrige quando módulos crescem no caminho
+    if (RR.scrollToTarget) return RR.scrollToTarget(id, opts);
     var target = document.getElementById(id);
     if (!target) return null;
     var behavior = reduced() ? 'auto' : 'smooth';
     if (id === 'inicio') window.scrollTo({ top: 0, behavior: behavior });
     else target.scrollIntoView({ behavior: behavior, block: 'start' });
-    if (opts && opts.focus) {
-      // leva o foco do teclado junto, sem anel de foco na seção inteira
-      if (!target.hasAttribute('tabindex')) { target.setAttribute('tabindex', '-1'); target.style.outline = 'none'; }
-      try { target.focus({ preventScroll: true }); } catch (e) { /* navegadores antigos */ }
-    }
     return target;
   }
   function goSection(id) { return function () { scrollToId(id, { focus: true }); }; }
@@ -125,8 +122,8 @@
     var nav = [
       ['inicio', 'Início', 'home', 'topo home hero começo difusão'],
       ['sobre', 'Sobre', 'user', 'sobre mim bio model card quem'],
-      ['galeria', 'Galeria neural', 'image', 'arte retratos obras algoritmos'],
-      ['lab', 'Lab', 'flask', 'playground rede neural treino otimizadores'],
+      ['galeria', 'Galeria neural', 'image', 'arte retratos obras algoritmos ia visão computacional'],
+      ['lab', 'Lab', 'flask', 'playground rede neural treino otimizadores ia ml machine learning'],
       ['raulgpt', 'RaulGPT', 'chat', 'chat rag perguntas assistente'],
       ['trajetoria', 'Trajetória', 'route', 'experiência formação currículo log treino embeddings habilidades'],
       ['contato', 'Contato', 'send', 'contato falar oportunidade redes']
@@ -200,7 +197,7 @@
     all.forEach(function (c, i) {
       c.order = i;
       c.labelNorm = normalize(c.label);
-      c.hayNorm = normalize(c.label + ' ' + c.keywords + ' ' + c.group);
+      c.words = normalize(c.label + ' ' + c.keywords + ' ' + c.group).split(/[\s:()\/.·#@-]+/).filter(Boolean);
     });
     return all;
   }
@@ -208,7 +205,7 @@
   /* ---------- busca fuzzy ----------
      Subsequência com programação dinâmica: bônus para início de palavra e
      letras consecutivas, penalidade por lacunas. Sem acentos e sem caixa. */
-  var MARKS = /[̀-ͯ]/g;
+  var MARKS = /[\u0300-\u036f]/g;
   function normalize(s) {
     var out = '';
     for (var i = 0; i < s.length; i++) {
@@ -267,23 +264,41 @@
     return { score: bestScore - n * 0.03, idx: idx };
   }
 
+  /* Qualidade do alinhamento: cada trecho contíguo deve começar no início de
+     uma palavra; tolera um único trecho no meio de palavra (consultas ≥ 3). */
+  function goodMatch(text, idx, qlen) {
+    var mid = 0;
+    for (var i = 0; i < idx.length; i++) {
+      if (i > 0 && idx[i] === idx[i - 1] + 1) continue;
+      if (!wordStart(text, idx[i])) mid++;
+    }
+    return mid <= (qlen >= 3 ? 1 : 0);
+  }
+
   function search(commands, query) {
-    var q = normalize(query).replace(/\s+/g, '');
+    var norm = normalize(query).trim();
+    var q = norm.replace(/\s+/g, '');
     if (!q) return commands.map(function (c) { return { cmd: c, score: 0, idx: [] }; });
+    var terms = norm.split(/\s+/);
     var res = [];
     commands.forEach(function (c) {
       var r = fuzzy(q, c.label, c.labelNorm);
-      if (r) { res.push({ cmd: c, score: r.score + 20, idx: r.idx }); return; }
-      var hay = c.label + ' ' + c.keywords + ' ' + c.group;
-      r = fuzzy(q, hay, c.hayNorm);
-      if (r) res.push({ cmd: c, score: r.score * 0.6, idx: r.idx.filter(function (k) { return k < c.label.length; }) });
+      if (r && goodMatch(c.label, r.idx, q.length)) { res.push({ cmd: c, score: r.score + 20, idx: r.idx }); return; }
+      // sinônimos: cada termo precisa ser prefixo de alguma palavra-chave
+      var hit = terms.every(function (t) {
+        for (var k = 0; k < c.words.length; k++) if (c.words[k].indexOf(t) === 0) return true;
+        return false;
+      });
+      if (hit) res.push({ cmd: c, score: 4 + q.length, idx: [] });
     });
     // grupos ordenados pelo melhor resultado; itens por pontuação
     var groupBest = {};
     res.forEach(function (r) { var g = r.cmd.group; groupBest[g] = Math.max(groupBest[g] == null ? NEG : groupBest[g], r.score); });
     res.sort(function (a, b) {
       if (a.cmd.group !== b.cmd.group) return groupBest[b.cmd.group] - groupBest[a.cmd.group];
-      return b.score - a.score || a.cmd.order - b.cmd.order;
+      // pontuações quase iguais (ex.: "Abrir obra: …") mantêm a ordem original
+      var d = b.score - a.score;
+      return Math.abs(d) >= 1 ? d : a.cmd.order - b.cmd.order;
     });
     return res;
   }
@@ -319,7 +334,8 @@
     foot.innerHTML =
       '<p id="palette-help" class="palette__hints"><span><kbd>↑</kbd><kbd>↓</kbd> navegar</span>' +
       '<span><kbd>Enter</kbd> executar</span><span><kbd>Esc</kbd> fechar</span></p>' +
-      '<p class="palette__brand" aria-hidden="true"><span class="palette__pulse"></span>raul<b>.ai</b></p>';
+      '<p class="palette__touch" aria-hidden="true">toque em um comando para executar</p>' +
+      '<p class="palette__brand" aria-hidden="true"><span class="palette__pulse"></span><span>raul<b>.ai</b></span></p>';
 
     ui.dialog.appendChild(title);
     ui.dialog.appendChild(bar);
@@ -337,8 +353,10 @@
     ui.backdrop.addEventListener('click', function () { close(); });
     ui.esc.addEventListener('click', function () { close(); });
 
-    // clique em opção (mousedown mantém o foco no campo)
-    ui.list.addEventListener('mousedown', function (e) { if (e.target.closest('[role="option"]')) e.preventDefault(); });
+    // cliques em áreas não interativas (opções, rótulos, rodapé) mantêm o foco no campo
+    ui.dialog.addEventListener('mousedown', function (e) {
+      if (e.target !== ui.input && !e.target.closest('button')) e.preventDefault();
+    });
     ui.list.addEventListener('click', function (e) {
       var o = e.target.closest('[role="option"]');
       if (o) run(+o.getAttribute('data-index'));
@@ -479,6 +497,13 @@
     isOpen = true;
     clearTimeout(closeTimer);
     lastFocus = document.activeElement;
+    // o menu mobile não fica aberto por trás do diálogo
+    var navEl = document.getElementById('nav');
+    if (navEl && navEl.classList.contains('is-open')) {
+      var tg = document.querySelector('.nav-toggle');
+      if (tg) tg.click();
+      if (lastFocus && navEl.contains(lastFocus)) lastFocus = tg;
+    }
     commands = buildCommands();
     ui.input.value = '';
     active = 0;
@@ -512,6 +537,7 @@
   /* ---------- atalhos e gatilhos ---------- */
   document.addEventListener('keydown', function (e) {
     var k = e.key || '';
+    if (isOpen && k === 'Escape') { e.preventDefault(); close(); return; }
     if ((e.ctrlKey || e.metaKey) && !e.altKey && !e.shiftKey && (k === 'k' || k === 'K')) {
       e.preventDefault();
       if (isOpen) close(); else open();
@@ -521,6 +547,10 @@
       e.preventDefault();
       open();
     }
+  });
+  // foco preso de verdade: se algo levar o foco para fora do diálogo, ele volta ao campo
+  document.addEventListener('focusin', function (e) {
+    if (isOpen && ui.dialog && !ui.dialog.contains(e.target)) ui.input.focus({ preventScroll: true });
   });
   document.addEventListener('click', function (e) {
     var t = e.target.closest && e.target.closest('[data-open-palette]');

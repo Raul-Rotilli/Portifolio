@@ -159,8 +159,11 @@
   .palette .palette__option { min-height: 50px; }
 }
 /* em telas de toque os atalhos de teclado não fazem sentido */
+.palette .palette__touch { display: none; color: var(--muted); }
 @media (pointer: coarse) and (hover: none) {
-  .palette .palette__hints { visibility: hidden; }
+  .palette .palette__hints { display: none; }
+  .palette .palette__touch { display: block; }
+  .palette .palette__enter { display: none; }
 }
 @media (prefers-reduced-motion: reduce) {
   .palette .palette__backdrop, .palette .palette__dialog { transition: none; }
@@ -228,11 +231,16 @@ body.is-overfitting .overfit-fx__dot {
   box-shadow: 0 0 10px var(--pink);
 }
 
-body.is-overfitting main h1,
+/* o h1 do hero já tem animação de entrada: o tremor vai no contêiner e a
+   aberração fica estática no título, para não reiniciar a entrada depois */
 body.is-overfitting main h2,
 body.is-overfitting main h3 {
   animation: rr-overfit-rgb 0.22s steps(2, jump-none) infinite;
 }
+body.is-overfitting main .hero__title {
+  text-shadow: -3px 0 rgba(255, 111, 174, 0.75), 3px 0 rgba(79, 123, 255, 0.75);
+}
+body.is-overfitting main .hero__copy { animation: rr-overfit-jitter 0.26s steps(2, jump-none) infinite; }
 body.is-overfitting main .grad-text {
   animation: rr-overfit-rgb-drop 0.22s steps(2, jump-none) infinite;
 }
@@ -277,11 +285,11 @@ body.is-overfitting .topbar { animation: rr-overfit-jitter 0.36s steps(2, jump-n
   body.is-overfitting .overfit-fx,
   body.is-overfitting .overfit-fx__scan,
   body.is-overfitting .overfit-fx__hud,
-  body.is-overfitting main h1, body.is-overfitting main h2, body.is-overfitting main h3,
+  body.is-overfitting main h2, body.is-overfitting main h3, body.is-overfitting main .hero__copy,
   body.is-overfitting main .grad-text, body.is-overfitting main canvas,
   body.is-overfitting main img, body.is-overfitting main .card, body.is-overfitting .topbar { animation: none; }
   body.is-overfitting .overfit-fx__scan { display: none; }
-  body.is-overfitting main h1, body.is-overfitting main h2 {
+  body.is-overfitting main h2 {
     text-shadow: -2px 0 rgba(255, 111, 174, 0.7), 2px 0 rgba(79, 123, 255, 0.7);
   }
 }

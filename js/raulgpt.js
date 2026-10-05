@@ -221,6 +221,13 @@
       action: { label: 'Ver a corrida de otimizadores', href: '#optimizers-root' }
     },
     {
+      id: 'overfitting', title: 'Overfitting e generalização', q: 'O que é overfitting?',
+      tags: 'overfitting overfit sobreajuste generalizacao generalizar decorar decorou treino teste validacao regularizacao underfitting',
+      text: 'Overfitting é quando o modelo decora os dados de treino em vez de aprender o padrão e erra em dados novos; a loss de teste denuncia.',
+      answer: 'Overfitting é quando o modelo decora os dados de treino em vez de aprender o padrão: vai muito bem no treino e mal em dados novos. Por isso se separa um conjunto de teste. No playground do Lab, fique de olho nas duas curvas: se a loss de treino cai e a de teste sobe, a rede está decorando.',
+      action: { label: 'Abrir o playground', href: '#lab' }
+    },
+    {
       id: 'rag', title: 'RAG (Retrieval-Augmented Generation)', q: 'O que é RAG?',
       tags: 'rag retrieval augmented generation recuperacao busca buscar base conhecimento trechos chatbot raulgpt funciona assistente',
       text: 'RAG recupera os trechos mais relevantes de uma base de conhecimento e os usa para responder. O RaulGPT é um RAG mínimo.',
@@ -266,7 +273,7 @@
       id: 'easter', title: 'Easter eggs', q: 'Tem algum easter egg?',
       tags: 'easter egg eggs segredo segredos escondido secreto atalho atalhos teclado ctrl comandos konami truque surpresa',
       text: 'Ctrl+K abre a paleta de comandos; o código Konami esconde uma surpresa.',
-      answer: 'Tem, sim. Aperte Ctrl + K para abrir a paleta de comandos e navegar pelo site só com o teclado. E, se você conhece o código Konami (↑ ↑ ↓ ↓ ← → ← → B A)… experimente.',
+      answer: 'Tem, sim. Aperte Ctrl + K para abrir a paleta de comandos e navegar pelo site só com o teclado. E, se você conhece o código Konami (↑ ↑ ↓ ↓ ← → ← → B A)… experimente. Digamos que o site pode sofrer um leve overfitting.',
       action: { label: 'Abrir a paleta de comandos', emit: 'palette:open' }
     },
     {
@@ -691,7 +698,9 @@
   var s5 = sec('05', 'métricas');
   s5.body.appendChild(el('div', { class: 'rg-mets' }, [ui.mDim.node, ui.mDocs.node, ui.mNnz.node, ui.mLat.node]));
 
-  ui.sumStat = el('span', { class: 'rg-sum__stat mono', text: 'aguardando' });
+  ui.sumMain = el('span', { text: 'aguardando' });
+  ui.sumLat = el('span', { class: 'rg-sum__lat' });
+  ui.sumStat = el('span', { class: 'rg-sum__stat mono' }, [ui.sumMain, ui.sumLat]);
   ui.insp = el('details', { class: 'rg__insp' }, [
     el('summary', { class: 'rg-sum' }, [
       el('span', { class: 'rg-sum__title' }, [el('span', { class: 'rg-sum__dot', 'aria-hidden': 'true' }), 'Inspetor de recuperação']),
@@ -1066,7 +1075,8 @@
       });
       ui.mNnz.v.textContent = '—';
       ui.mLat.v.textContent = '—';
-      ui.sumStat.textContent = 'aguardando';
+      ui.sumMain.textContent = 'aguardando';
+      ui.sumLat.textContent = '';
       drawStrip();
       return;
     }
@@ -1107,7 +1117,8 @@
     });
     ui.mNnz.v.textContent = String(res.nnz);
     ui.mLat.v.textContent = fmtMs(res.ms);
-    ui.sumStat.textContent = (res.fallback ? 'abaixo do limiar' : 'cos ' + fmt3(res.best.score)) + ' · ' + fmtMs(res.ms);
+    ui.sumMain.textContent = res.fallback ? '< limiar' : 'cos ' + fmt3(res.best.score);
+    ui.sumLat.textContent = ' · ' + fmtMs(res.ms);
     drawStrip();
   }
 

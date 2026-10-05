@@ -57,6 +57,96 @@
   }
   RR.revealScan = revealScan;
 
+  /* ---------- rolagem para seções que se autocorrige ----------
+     Os módulos montam o DOM sob demanda (a galeria cresce ~1000 px ao entrar
+     na tela), então o destino muda no meio de uma rolagem suave. Depois que a
+     rolagem para, conferimos a posição e corrigimos até o alvo assentar.
+     Qualquer gesto do usuário (roda, toque, tecla) cancela a correção. */
+  var settle = { timer: 0, off: null, instant: false };
+  function headerOffset() {
+    var v = parseFloat(getComputedStyle(root).scrollPaddingTop);
+    return isNaN(v) ? 80 : v;
+  }
+  function stopSettle() {
+    clearInterval(settle.timer); settle.timer = 0;
+    if (settle.off) { settle.off(); settle.off = null; }
+    if (settle.instant) { root.style.scrollBehavior = ''; settle.instant = false; }
+  }
+  function scrollToTarget(target, opts) {
+    opts = opts || {};
+    if (typeof target === 'string') target = doc.getElementById(target);
+    if (!target) return null;
+    var behavior = reduced() || opts.instant ? 'auto' : 'smooth';
+    var isTop = target.id === 'inicio' || target.id === 'conteudo';
+    function want() {
+      if (isTop) return 0;
+      var y = (window.scrollY || 0) + target.getBoundingClientRect().top - headerOffset();
+      return Math.max(0, Math.min(y, root.scrollHeight - window.innerHeight));
+    }
+    stopSettle();
+    // "auto" ainda herdaria o scroll-behavior: smooth do CSS; desliga enquanto corrige
+    if (opts.instant) { settle.instant = true; root.style.scrollBehavior = 'auto'; }
+    window.scrollTo({ top: want(), behavior: behavior });
+
+    var lastY = -1, still = 0, ticks = 0;
+    settle.timer = setInterval(function () {
+      var y = window.scrollY || 0;
+      if (++ticks > 45) { stopSettle(); return; }        // ~4,5 s no máximo
+      if (Math.abs(y - lastY) < 1) {                      // a rolagem parou
+        var w = want();
+        if (Math.abs(w - y) > 3) { window.scrollTo({ top: w, behavior: behavior }); still = 0; }
+        else if (++still >= 3) stopSettle();
+      }
+      lastY = y;
+    }, 100);
+    // anexado no próximo tick para não capturar o próprio clique/Enter que iniciou
+    setTimeout(function () {
+      if (!settle.timer) return;
+      var cancel = function () { stopSettle(); };
+      var evs = ['wheel', 'touchstart', 'keydown', 'pointerdown'];
+      evs.forEach(function (t) { window.addEventListener(t, cancel, { passive: true, capture: true }); });
+      settle.off = function () { evs.forEach(function (t) { window.removeEventListener(t, cancel, { capture: true }); }); };
+    }, 0);
+
+    if (opts.focus) {
+      // leva o foco do teclado junto, sem anel de foco na seção inteira
+      if (!target.hasAttribute('tabindex')) { target.setAttribute('tabindex', '-1'); target.style.outline = 'none'; }
+      try { target.focus({ preventScroll: true }); } catch (e) { /* navegadores antigos */ }
+    }
+    return target;
+  }
+  RR.scrollToTarget = scrollToTarget;
+
+  // links internos (#secao) usam a rolagem autocorrigida
+  function initAnchors() {
+    on(doc, 'click', function (e) {
+      if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+      var a = e.target.closest && e.target.closest('a[href^="#"]');
+      if (!a) return;
+      var id = a.getAttribute('href').slice(1);
+      var target = id && doc.getElementById(id);
+      if (!target) return;                               // ex.: #galeria/kmeans fica com o navegador
+      e.preventDefault();
+      if (window.location.hash !== '#' + id && window.history && history.pushState) {
+        try { history.pushState(null, '', '#' + id); } catch (err) { /* file:// em alguns navegadores */ }
+      }
+      scrollToTarget(target, { focus: true });
+    });
+  }
+
+  /* Link direto (index.html#trajetoria, redirecionamentos de pages/*): o
+     navegador rolaria suavemente desde o topo, montando a galeria no caminho
+     e errando o alvo. Salto instantâneo + correção depois do load. */
+  function initDeepLink() {
+    var id = '';
+    try { id = decodeURIComponent((window.location.hash || '').slice(1)); } catch (e) { return; }
+    var target = id && doc.getElementById(id);
+    if (!target || id === 'inicio') return;
+    root.style.scrollBehavior = 'auto';
+    var go = function () { scrollToTarget(target, { instant: true }); };
+    if (doc.readyState === 'complete') go(); else on(window, 'load', go);
+  }
+
   /* ---------- cabeçalho: fundo de vidro depois de rolar ---------- */
   function initHeader() {
     var bar = doc.getElementById('topbar');
@@ -174,6 +264,30 @@
     }, { passive: true });
   }
 
+  /* ---------- dicas de atalho: ⌘ no Mac; nenhuma em telas só de toque ---------- */
+  function initShortcutHints() {
+    var nav = window.navigator || {};
+    var mac = /Mac|iPhone|iPad|iPod/i.test(nav.platform || nav.userAgent || '');
+    var touchOnly = !!(window.matchMedia && window.matchMedia('(hover: none) and (pointer: coarse)').matches);
+    var btns = doc.querySelectorAll('[data-open-palette]');
+    for (var i = 0; i < btns.length; i++) {
+      var kbd = btns[i].querySelector('kbd');
+      if (touchOnly) {
+        btns[i].setAttribute('aria-label', 'Abrir paleta de comandos');
+        if (kbd) kbd.style.display = 'none';
+      } else if (mac) {
+        btns[i].setAttribute('aria-label', 'Abrir paleta de comandos (⌘K)');
+        if (kbd) kbd.textContent = '⌘ K';
+      }
+    }
+    var keys = doc.querySelectorAll('.footer kbd');
+    for (var j = 0; j < keys.length; j++) {
+      if (keys[j].textContent !== 'Ctrl') continue;
+      if (touchOnly && keys[j].parentNode) keys[j].parentNode.style.display = 'none';
+      else if (mac) { keys[j].textContent = '⌘'; keys[j].setAttribute('title', 'Command'); }
+    }
+  }
+
   /* ---------- ano no rodapé ---------- */
   function initYear() {
     var y = doc.getElementById('year');
@@ -249,9 +363,12 @@
   /* ---------- inicialização ---------- */
   safe('revelar', initReveal);
   safe('cabeçalho', initHeader);
+  safe('âncoras', initAnchors);
+  safe('link direto', initDeepLink);
   safe('menu', initNav);
   safe('seção ativa', initActiveSection);
   safe('ano', initYear);
+  safe('atalhos', initShortcutHints);
   safe('console', initConsole);
   safe('konami', initKonami);
 })();
