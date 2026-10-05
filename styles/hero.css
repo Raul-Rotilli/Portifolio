@@ -1,0 +1,419 @@
+/* =========================================================================
+   hero.css — abertura: retrato por difusão (canvas) + subtítulo em streaming
+   Todos os seletores escopados em .hero
+   ========================================================================= */
+
+.hero {
+  /* altura do palco: limitada pela viewport (svh quando disponível) */
+  --stage-h: min(56vh, 560px);
+  position: relative;
+  display: grid;
+  align-items: center;
+  min-height: 100vh;
+  padding-top: calc(var(--header-h) + clamp(14px, 4vh, 44px));
+  padding-bottom: clamp(48px, 8vh, 88px);
+  overflow: hidden;
+}
+@supports (height: 1svh) {
+  .hero { --stage-h: min(56svh, 560px); min-height: 100svh; }
+}
+@supports (overflow: clip) {
+  .hero { overflow: clip; }
+}
+
+.hero .hero__inner {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: clamp(32px, 6vw, 56px);
+  align-items: center;
+}
+
+/* ---------- coluna de texto ---------- */
+.hero .hero__copy { min-width: 0; }
+
+.hero .hero__eyebrow {
+  display: inline-flex; align-items: center; flex-wrap: wrap; gap: 4px 10px;
+  max-width: 100%;
+  margin-bottom: clamp(18px, 3vh, 26px);
+  padding: 7px 14px 7px 12px;
+  border: 1px solid var(--line-strong); border-radius: 999px;
+  background: linear-gradient(90deg, rgba(158, 245, 207, 0.07), rgba(255, 255, 255, 0.02) 60%);
+  font-size: 0.74rem; line-height: 1.3; color: var(--muted);
+}
+.hero .hero__eyebrow b { color: var(--text); font-weight: 500; }
+
+.hero .hero__title {
+  font-size: clamp(2.75rem, 6.6vw, 5.6rem);
+  line-height: 0.98;
+  letter-spacing: -0.035em;
+  margin-bottom: clamp(18px, 3vh, 26px);
+  text-wrap: balance;
+}
+
+.hero .hero__stream {
+  position: relative;
+  max-width: 36ch;
+  font-size: clamp(1.12rem, 1.85vw, 1.38rem);
+  text-wrap: pretty;
+  line-height: 1.5;
+  color: var(--text-2);
+}
+.hero .hero__stream strong { color: var(--text); }
+
+.hero .hero__lead {
+  max-width: 54ch;
+  margin-top: 18px;
+  font-size: clamp(0.96rem, 1.2vw, 1.04rem);
+  color: var(--muted);
+}
+
+.hero .hero__cta { margin-top: clamp(26px, 4vh, 36px); gap: 12px; }
+
+/* tokens do streaming */
+.hero .hero__w { white-space: nowrap; }
+.hero .hero__tok { transition: background-color 0.25s, box-shadow 0.25s; border-radius: 4px; }
+.hero .hero__stream.is-streaming .hero__tok { opacity: 0; }
+.hero .hero__stream.is-streaming .hero__tok.is-on { opacity: 1; animation: hero-tok 0.7s var(--ease-out); }
+@keyframes hero-tok {
+  from { color: var(--mint); text-shadow: 0 0 14px rgba(158, 245, 207, 0.55); }
+}
+/* passe o mouse: fronteiras dos tokens, como num visualizador de tokenizer */
+@media (hover: hover) {
+  .hero .hero__stream.is-done:hover .hero__tok--0 { background-color: rgba(158, 245, 207, 0.13); }
+  .hero .hero__stream.is-done:hover .hero__tok--1 { background-color: rgba(79, 123, 255, 0.2); }
+  .hero .hero__stream.is-done:hover .hero__tok--2 { background-color: rgba(255, 111, 174, 0.15); }
+}
+
+.hero .hero__caret {
+  display: inline-block;
+  width: 0.55em; height: 1.05em;
+  margin-right: -0.55em;               /* não ocupa espaço: nada pula durante o streaming */
+  vertical-align: -0.16em;
+  border-radius: 2px;
+  background: var(--mint);
+  box-shadow: 0 0 12px rgba(158, 245, 207, 0.6);
+  transition: opacity 0.6s;
+}
+.hero .hero__caret.is-idle { animation: hero-blink 1.05s steps(1, end) infinite; }
+.hero .hero__caret.is-gone { opacity: 0; animation: none; }
+@keyframes hero-blink { 50% { opacity: 0; } }
+
+.hero .hero__stats {
+  display: block;
+  margin-top: 10px;
+  font-family: var(--font-mono); font-size: 0.7rem; line-height: 1.4; letter-spacing: 0.01em;
+  color: var(--muted);
+  visibility: hidden; opacity: 0;
+  transition: opacity 0.6s, visibility 0.6s;
+}
+.hero .hero__stats::before { content: '↳ '; color: var(--mint); }
+.hero .hero__stream.is-done .hero__stats { visibility: visible; opacity: 0.85; }
+
+/* ---------- coluna visual ---------- */
+.hero .hero__visual {
+  position: relative;
+  isolation: isolate;
+  container: hero-visual / inline-size;
+  order: -1;                           /* no celular, o retrato vem primeiro */
+  justify-self: center;
+  width: min(100%, calc(var(--stage-h) * 491 / 712));
+  margin-bottom: 26px;                 /* espaço da legenda sob o palco */
+}
+
+/* anéis "latentes" + brilho atrás do retrato */
+.hero .hero__visual::before {
+  content: ''; position: absolute; z-index: -1; pointer-events: none;
+  left: 50%; top: 44%;
+  width: 170%; aspect-ratio: 1;
+  margin: -85% 0 0 -85%;
+  border-radius: 50%;
+  background:
+    radial-gradient(closest-side, rgba(79, 123, 255, 0.24), rgba(79, 123, 255, 0.07) 42%, transparent 70%),
+    radial-gradient(closest-side at 46% 40%, rgba(158, 245, 207, 0.08), transparent 55%),
+    repeating-radial-gradient(circle at center, transparent 0 37px, rgba(158, 245, 207, 0.075) 37px 38px);
+  -webkit-mask-image: radial-gradient(closest-side, #000 30%, transparent 96%);
+          mask-image: radial-gradient(closest-side, #000 30%, transparent 96%);
+}
+/* órbita tracejada girando devagar */
+.hero .hero__visual::after {
+  content: ''; position: absolute; z-index: -1; pointer-events: none;
+  left: 50%; top: 44%;
+  width: 124%; aspect-ratio: 1;
+  margin: -62% 0 0 -62%;
+  border-radius: 50%;
+  background:
+    conic-gradient(from 0deg, transparent 0 318deg, rgba(158, 245, 207, 0.9) 318deg 320deg, transparent 320deg),
+    repeating-conic-gradient(from 0deg, rgba(158, 245, 207, 0.28) 0 0.7deg, transparent 0.7deg 5deg);
+  -webkit-mask-image: radial-gradient(closest-side, transparent calc(100% - 7px), #000 calc(100% - 6px), #000 calc(100% - 1px), transparent);
+          mask-image: radial-gradient(closest-side, transparent calc(100% - 7px), #000 calc(100% - 6px), #000 calc(100% - 1px), transparent);
+  opacity: 0.55;
+}
+
+.hero .hero__stage {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 491 / 712;
+  border-radius: var(--radius);
+  cursor: pointer;
+  touch-action: pan-y;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-user-select: none; user-select: none;
+}
+/* moldura de visor: cantos + marcas centrais */
+.hero .hero__stage::after {
+  --c: rgba(158, 245, 207, 0.5);
+  --l: 22px; --w: 1.5px; --tick: 7px;
+  content: ''; position: absolute; z-index: 4; pointer-events: none;
+  inset: -12px;
+  background:
+    linear-gradient(var(--c) 0 0) left top / var(--l) var(--w),
+    linear-gradient(var(--c) 0 0) left top / var(--w) var(--l),
+    linear-gradient(var(--c) 0 0) right top / var(--l) var(--w),
+    linear-gradient(var(--c) 0 0) right top / var(--w) var(--l),
+    linear-gradient(var(--c) 0 0) left bottom / var(--l) var(--w),
+    linear-gradient(var(--c) 0 0) left bottom / var(--w) var(--l),
+    linear-gradient(var(--c) 0 0) right bottom / var(--l) var(--w),
+    linear-gradient(var(--c) 0 0) right bottom / var(--w) var(--l),
+    linear-gradient(var(--line-strong) 0 0) center top / var(--w) var(--tick),
+    linear-gradient(var(--line-strong) 0 0) center bottom / var(--w) var(--tick),
+    linear-gradient(var(--line-strong) 0 0) left center / var(--tick) var(--w),
+    linear-gradient(var(--line-strong) 0 0) right center / var(--tick) var(--w);
+  background-repeat: no-repeat;
+  transition: inset 0.45s var(--ease-out), opacity 0.3s;
+}
+.hero .hero__stage:hover::after { inset: -16px; --c: rgba(158, 245, 207, 0.85); }
+.hero .hero__stage:focus { outline: none; }
+.hero .hero__stage:focus-visible {
+  outline: 2px solid var(--mint);
+  outline-offset: 4px;
+  border-radius: var(--radius);
+}
+.hero .hero__stage:focus-visible::after { --c: var(--mint); inset: -16px; }
+
+/* camadas dentro do palco */
+.hero .hero__fallback,
+.hero .hero__glow {
+  position: absolute; inset: 0;
+  width: 100%; height: 100%;
+  pointer-events: none;
+  -webkit-mask-image:
+    linear-gradient(to bottom, #000 74%, transparent 99%),
+    linear-gradient(to right, transparent, #000 7%, #000 93%, transparent);
+  -webkit-mask-composite: source-in;
+          mask-image:
+    linear-gradient(to bottom, #000 74%, transparent 99%),
+    linear-gradient(to right, transparent, #000 7%, #000 93%, transparent);
+          mask-composite: intersect;
+}
+.hero .hero__fallback {
+  z-index: 1;
+  object-fit: contain;
+  transition: opacity 0.7s var(--ease-out);
+}
+.hero .hero__stage.is-live .hero__fallback { opacity: 0; }
+.hero .hero__glow {
+  z-index: 0;
+  opacity: 0;
+  filter: blur(3px) saturate(1.15);
+  transform-origin: 50% 50%;
+  will-change: transform, opacity;
+}
+.hero .hero__canvas {
+  position: absolute; z-index: 2;
+  max-width: none;                     /* o canvas sangra além do palco */
+  pointer-events: none;
+  -webkit-mask-image:
+    linear-gradient(to bottom, #000 calc(var(--bleed, 0px) + 72%), transparent calc(100% - var(--bleed, 0px) + 2px)),
+    linear-gradient(to right, transparent, #000 calc(var(--bleed, 0px) + 5%), #000 calc(100% - var(--bleed, 0px) - 5%), transparent);
+  -webkit-mask-composite: source-in;
+          mask-image:
+    linear-gradient(to bottom, #000 calc(var(--bleed, 0px) + 72%), transparent calc(100% - var(--bleed, 0px) + 2px)),
+    linear-gradient(to right, transparent, #000 calc(var(--bleed, 0px) + 5%), #000 calc(100% - var(--bleed, 0px) - 5%), transparent);
+          mask-composite: intersect;
+}
+
+/* pincel: raio de perturbação seguindo o mouse */
+.hero .hero__brush {
+  position: absolute; left: 0; top: 0; z-index: 3;
+  border-radius: 50%;
+  border: 1px dashed rgba(158, 245, 207, 0.4);
+  background: radial-gradient(closest-side, rgba(158, 245, 207, 0.07), transparent 70%);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+.hero .hero__brush::after {
+  content: ''; position: absolute; left: 50%; top: 50%;
+  width: 4px; height: 4px; margin: -2px 0 0 -2px; border-radius: 50%;
+  background: var(--mint);
+}
+.hero .hero__stage.is-hover .hero__brush { opacity: 1; }
+
+/* ---------- HUD sobre o palco ---------- */
+.hero .hero__hud {
+  position: absolute; inset: 0; z-index: 5;
+  display: flex; flex-direction: column; justify-content: space-between;
+  padding: 10px;
+  pointer-events: none;
+  font-size: 0.7rem;
+  line-height: 1.2;
+  opacity: 0;
+  transition: opacity 0.6s var(--ease-out);
+}
+.hero .hero__hud.is-ready { opacity: 1; }
+
+.hero .hero__hud-top { display: flex; justify-content: flex-end; }
+.hero .hero__styles {
+  pointer-events: auto;
+  gap: 2px; padding: 3px;
+  border-radius: 10px;
+  border-color: var(--line-strong);
+  background: rgba(7, 8, 13, 0.62);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+}
+.hero .hero__styles button {
+  padding: 5px 9px;
+  border-radius: 7px;
+  font-family: var(--font-mono); font-size: 0.66rem; letter-spacing: 0.01em;
+  color: var(--muted);
+}
+.hero .hero__styles button:hover { color: var(--text); }
+.hero .hero__styles button[aria-pressed='true'] { color: var(--mint); background: rgba(158, 245, 207, 0.13); }
+.hero .hero__styles button:focus-visible { outline-offset: 1px; border-radius: 7px; }
+
+.hero .hero__hud-bottom { display: grid; gap: 7px; justify-items: start; }
+.hero .hero__chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.hero .hero__chip {
+  display: inline-flex; align-items: center; gap: 6px;
+  height: 24px; padding: 0 9px;
+  border-radius: 999px;
+  border: 1px solid var(--line-strong);
+  background: rgba(7, 8, 13, 0.66);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  color: var(--text-2);
+  white-space: nowrap;
+}
+.hero .hero__num {
+  font-weight: 500; color: var(--text);
+  font-variant-numeric: tabular-nums;
+  display: inline-block; min-width: 4ch; text-align: right;
+}
+.hero .hero__num--s { min-width: 4ch; }
+.hero .hero__sym { color: var(--muted); font-style: italic; }
+.hero .hero__dot {
+  width: 7px; height: 7px; border-radius: 50%; flex: none;
+  background: var(--mint);
+  box-shadow: 0 0 0 0 rgba(158, 245, 207, 0.5);
+}
+.hero .hero__hud[data-phase='fwd'] .hero__dot { background: var(--sun); box-shadow: 0 0 10px rgba(255, 179, 138, 0.7); }
+.hero .hero__hud[data-phase='rev'] .hero__dot { animation: pulse 1.4s infinite; }
+.hero .hero__hud[data-phase='idle'] .hero__chip--status { color: var(--mint); border-color: rgba(158, 245, 207, 0.35); }
+.hero .hero__meter {
+  position: relative; display: inline-block;
+  width: 46px; height: 4px; border-radius: 4px; overflow: hidden;
+  background: rgba(255, 255, 255, 0.12);
+}
+.hero .hero__meter i {
+  position: absolute; inset: 0;
+  background: linear-gradient(90deg, var(--mint), var(--blue) 70%, var(--pink));
+  transform-origin: 0 50%;
+  transform: scaleX(0);
+}
+.hero .hero__hint {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 0 2px;
+  font-family: var(--font-mono); font-size: 0.66rem;
+  color: var(--muted);
+  text-shadow: 0 1px 8px rgba(7, 8, 13, 0.9);
+  transition: color 0.4s;
+}
+.hero .hero__hud[data-phase='idle'] .hero__hint { color: var(--text-2); }
+.hero .hero__hint-ico { display: inline-grid; color: var(--mint); }
+.hero .hero__hint-short { display: none; }
+
+/* HUD se adapta à largura real do palco (container queries) */
+@container hero-visual (max-width: 400px) {
+  .hero .hero__hud { padding: 9px; font-size: 0.66rem; }
+  .hero .hero__chips { gap: 4px; }
+  .hero .hero__chip { height: 22px; padding: 0 7px; gap: 5px; }
+  .hero .hero__meter { width: 26px; }
+  .hero .hero__styles button { padding: 4px 7px; font-size: 0.62rem; }
+}
+@container hero-visual (max-width: 300px) {
+  .hero .hero__hud { padding: 7px; }
+  .hero .hero__chip--sigma { display: none; }
+  .hero .hero__hint-long { display: none; }
+  .hero .hero__hint-short { display: inline; }
+}
+
+/* legenda sob o palco */
+.hero .hero__meta {
+  position: absolute; left: 0; right: 0; top: calc(100% + 14px);
+  display: flex; justify-content: space-between; gap: 12px;
+  font-family: var(--font-mono); font-size: 0.66rem; letter-spacing: 0.02em;
+  color: var(--muted);
+  white-space: nowrap;
+}
+.hero .hero__sample { color: var(--text-2); }
+
+/* ---------- indicador de rolagem ---------- */
+.hero .hero__scroll {
+  position: absolute; left: 50%; bottom: clamp(14px, 3vh, 26px);
+  display: none; flex-direction: column; align-items: center; gap: 6px;
+  transform: translateX(-50%);
+  padding: 6px 10px; border-radius: 999px;
+  font-size: 0.68rem; letter-spacing: 0.14em; text-transform: uppercase; text-decoration: none;
+  color: var(--muted);
+  transition: color 0.2s;
+}
+.hero .hero__scroll:hover { color: var(--mint); }
+.hero .hero__scroll svg { width: 14px; height: 14px; }
+
+/* ---------- desktop: duas colunas ---------- */
+@media (min-width: 960px) {
+  .hero {
+    --stage-h: min(80vh, calc(100vh - var(--header-h) - 170px), 740px);
+    padding-bottom: clamp(64px, 10vh, 104px);
+  }
+  @supports (height: 1svh) {
+    .hero { --stage-h: min(80svh, calc(100svh - var(--header-h) - 170px), 740px); }
+  }
+  .hero .hero__inner {
+    grid-template-columns: minmax(0, 1.2fr) minmax(0, 0.95fr);
+    gap: clamp(32px, 4vw, 72px);
+  }
+  .hero .hero__visual { order: 0; justify-self: end; margin-right: 12px; }
+  .hero .hero__scroll { display: flex; }
+  .hero .hero__hud { padding: 12px; font-size: 0.72rem; }
+}
+@media (min-width: 960px) and (max-height: 640px) {
+  .hero .hero__scroll { display: none; }
+}
+
+/* telas estreitas: selo vira linha simples (quebra de forma natural) e moldura mais justa */
+@media (max-width: 520px) {
+  .hero .hero__eyebrow {
+    padding: 0; border: 0; border-radius: 0; background: none;
+    font-size: 0.72rem;
+  }
+}
+@media (max-width: 420px) {
+  .hero .hero__stage::after { inset: -8px; --l: 16px; }
+  .hero .hero__stage:hover::after { inset: -8px; }
+}
+
+/* ---------- entrada (somente sem preferência por movimento reduzido) ---------- */
+@media (prefers-reduced-motion: no-preference) {
+  .js .hero .hero__copy > * { animation: hero-rise 0.9s var(--ease-out) both; }
+  .js .hero .hero__copy > :nth-child(2) { animation-delay: 0.06s; }
+  .js .hero .hero__copy > :nth-child(3) { animation-delay: 0.14s; }
+  .js .hero .hero__copy > :nth-child(4) { animation-delay: 0.22s; }
+  .js .hero .hero__copy > :nth-child(5) { animation-delay: 0.3s; }
+  .js .hero .hero__visual { animation: hero-fade 1.1s var(--ease-out) 0.05s both; }
+  .hero .hero__visual::after { animation: hero-orbit 90s linear infinite; }
+  .hero .hero__scroll svg { animation: hero-bob 2.2s ease-in-out infinite; }
+}
+@keyframes hero-rise { from { opacity: 0; transform: translateY(18px); } }
+@keyframes hero-fade { from { opacity: 0; transform: scale(0.975); } }
+@keyframes hero-orbit { to { transform: rotate(360deg); } }
+@keyframes hero-bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(5px); } }
