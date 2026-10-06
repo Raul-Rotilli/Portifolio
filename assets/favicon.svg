@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <title>raul.ai</title>
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="64" y2="64" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#9ef5cf"/>
+      <stop offset="0.55" stop-color="#4f7bff"/>
+      <stop offset="1" stop-color="#ff6fae"/>
+    </linearGradient>
+    <radialGradient id="s" cx="18" cy="10" r="40" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#fff" stop-opacity="0.35"/>
+      <stop offset="1" stop-color="#fff" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="64" height="64" rx="15" fill="url(#g)"/>
+  <rect width="64" height="64" rx="15" fill="url(#s)"/>
+  <!-- "R" como uma pequena rede: arestas + neurônios -->
+  <g fill="none" stroke="#07080d" stroke-width="6.5" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M21 47V17h11a8 8 0 0 1 0 16H21"/>
+    <path d="M31 33l13 14"/>
+  </g>
+  <g fill="#07080d">
+    <circle cx="21" cy="17" r="6"/>
+    <circle cx="21" cy="47" r="6"/>
+    <circle cx="44" cy="47" r="6"/>
+  </g>
+  <g fill="#9ef5cf">
+    <circle cx="21" cy="17" r="2.2"/>
+    <circle cx="21" cy="47" r="2.2"/>
+    <circle cx="44" cy="47" r="2.2"/>
+  </g>
+</svg>
