@@ -1,0 +1,9 @@
+{
+  "name": "portifolio-raul-rotilli",
+  "version": "2.0.0",
+  "private": true,
+  "description": "Portfólio de Raul Rotilli Aguirre: site estático em HTML, CSS e JavaScript puros, sem dependências e sem etapa de build.",
+  "engines": {
+    "node": "22.x"
+  }
+}
