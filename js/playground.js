@@ -313,7 +313,10 @@
   function measure() {
     var tr = net.evaluate(sets.trX, sets.trY, sets.nTr), te = net.evaluate(sets.teX, sets.teY, sets.nTe);
     stats.trLoss = tr.loss; stats.trAcc = tr.acc; stats.teLoss = te.loss; stats.teAcc = te.acc;
-    if (!isFinite(tr.loss) || !net.isFinite()) diverge();
+    if (!isFinite(tr.loss) || !net.isFinite()) { diverge(false); return; }
+    // a BCE estável quase nunca vira infinito: perda ainda acima da inicial depois de 50 épocas = treino instável
+    var unstable = state.epoch >= 50 && hist.tr.length && tr.loss > Math.max(0.75, 1.1 * hist.tr[0]);
+    if (unstable) diverge(true);
   }
   function record() {
     var n = hist.e.length;
@@ -329,11 +332,13 @@
     net.trainEpoch(sets.trX, sets.trY, sets.nTr, sets.order, trainRand, { batch: BATCH, lr: state.lr, l2: state.l2, mu: state.mu });
     state.epoch++;
   }
-  function diverge() {
+  function diverge(unstable) {
     if (state.diverged) return;
     state.diverged = true;
     pause(true);
-    announce('A rede divergiu: a perda virou infinito. Reduza a taxa de aprendizado e reinicie.');
+    announce(unstable
+      ? 'O treino ficou instável: a perda não cai. Reduza a taxa de aprendizado e reinicie.'
+      : 'A rede divergiu: a perda virou infinito. Reduza a taxa de aprendizado e reinicie.');
     updateStatus();
   }
 
@@ -374,7 +379,7 @@
 
     /* barra de transporte + HUD */
     ui.play = h('button', { class: 'btn btn--primary pg__play', type: 'button', onclick: function () { userActed = true; state.playing ? pause() : play(); } });
-    ui.step = iconBtn('btn btn--ghost btn--sm pg__tbtn', ICON.step, 'Avançar uma época', function () { userActed = true; stepOnce(); }, 'Passo');
+    ui.step = iconBtn('btn btn--ghost btn--sm pg__tbtn', ICON.step, 'Passo: avançar uma época', function () { userActed = true; stepOnce(); }, 'Passo');
     ui.reset = iconBtn('btn btn--ghost btn--sm pg__tbtn', ICON.reset, 'Reiniciar os pesos com uma nova semente', function () { userActed = true; state.wSeed++; resetNet(); announce('Pesos reiniciados (semente ' + state.wSeed + ').'); }, 'Reiniciar');
     function stat(label, key, title) {
       ui[key] = h('span', { class: 'pg__statval' });
@@ -465,7 +470,7 @@
     ui.chipData = h('span', { class: 'pg__chip pg__chip--tl mono' });
     ui.chipRead = h('span', { class: 'pg__chip pg__chip--tr mono', hidden: true });
     ui.chipFocus = h('span', { class: 'pg__chip pg__chip--bl mono', hidden: true });
-    ui.chipWarn = h('span', { class: 'pg__chip pg__chip--warn mono', hidden: true, text: 'divergiu · reduza a taxa e reinicie' });
+    ui.chipWarn = h('span', { class: 'pg__chip pg__chip--warn mono', hidden: true, text: 'instável · reduza a taxa e reinicie' });
     ui.plotWrap = h('div', { class: 'pg__plot' }, [ui.plotCanvas, ui.chipData, ui.chipRead, ui.chipFocus, ui.chipWarn]);
     var legend = h('div', { class: 'pg__legend mono', 'aria-hidden': 'true' }, [
       h('span', { class: 'pg__lg' }, [h('i', { class: 'pg__lgdot' }), 'treino']),
@@ -504,7 +509,7 @@
   function updateStatus() {
     if (!ui.statusText) return;
     var pg = root.querySelector('.pg');
-    var s = state.diverged ? 'divergiu' : state.playing ? 'treinando' : 'pausado';
+    var s = state.diverged ? 'instável' : state.playing ? 'treinando' : 'pausado';
     ui.statusText.textContent = s;
     pg.dataset.status = state.diverged ? 'diverged' : state.playing ? 'training' : 'paused';
     ui.chipWarn.hidden = !state.diverged;
@@ -536,7 +541,7 @@
     var actName = ACTS.filter(function (a) { return a.v === state.act; })[0].label;
     ui.netCanvas.setAttribute('aria-label', 'Diagrama da rede: 2 entradas (x₁, x₂), ' + state.layers.length +
       (state.layers.length > 1 ? ' camadas ocultas com ' : ' camada oculta com ') + state.layers.join(', ') +
-      ' neurônios (ativação ' + actName + ') e 1 saída sigmoide. A espessura das conexões é proporcional ao peso; azul = positivo, laranja = negativo.');
+      (state.layers.every(function (n) { return n === 1; }) ? ' neurônio' : ' neurônios') + ' (ativação ' + actName + ') e 1 saída sigmoide. A espessura das conexões é proporcional ao peso; azul = positivo, laranja = negativo.');
     buildColHeads();
   }
   function updateHud() {
@@ -623,10 +628,15 @@
     }
     lastTrainMs = performance.now() - t0;
     measure(); record();
+    // o autoplay (sem interação do visitante) para sozinho quando a rede converge: não gasta CPU à toa
+    if (autoRun && !userActed && state.playing && (state.epoch >= 1500 || (stats.teAcc >= 0.99 && state.epoch >= 300))) {
+      autoRun = false;
+      pause(true);
+    }
     dirty.eval = dirty.plot = dirty.net = dirty.loss = dirty.hud = true;
     render(performance.now(), true);
   });
-  var lastTrainMs = 0;
+  var lastTrainMs = 0, autoRun = false;
   function syncLoop() {
     var run = state.playing && visible && !document.hidden && inited;
     if (run && !loop.running) loop.start();
@@ -1127,7 +1137,7 @@
     RR.onFirstVisible(root, init);
     // auto-play uma única vez, quando o gráfico estiver de fato na tela
     RR.onFirstVisible(ui.plotWrap, function () {
-      if (!RR.reducedMotion && !userActed && !state.playing) play();
+      if (!RR.reducedMotion && !userActed && !state.playing) { autoRun = true; play(); }
     }, { rootMargin: '0px', threshold: 0.35 });
     document.addEventListener('visibilitychange', syncLoop);
     RR.on('playground:dataset', function (id) { setDataset(id, true); });

@@ -1,5 +1,5 @@
 /* =========================================================================
-   raulgpt.js — RaulGPT: um mini-RAG que roda 100% no navegador (#raulgpt-root)
+   raulgpt.js — RaulGPT: um mini RAG que roda 100% no navegador (#raulgpt-root)
    Pipeline: normalização (minúsculas, sem acentos) → tokens → stopwords →
    radicais (stemming leve) → correção de digitação + sinônimos → vetor TF-IDF
    → similaridade de cosseno com cada trecho da base → top-3.
@@ -48,6 +48,20 @@
       text: 'Experiência profissional: dois estágios de TI.',
       answer: 'Fui estagiário de TI em dois lugares: na Metha Informática Ltda, com manutenção de hardware e software, e na Secretaria Municipal de Cultura de Porto Alegre, onde administrava o setor de informática local. Quer detalhes de algum deles?',
       action: { label: 'Ver a trajetória', href: '#trajetoria' }
+    },
+    {
+      id: 'trabalha-ia', title: 'IA no trabalho?', q: 'Você trabalha com IA?',
+      tags: 'trabalha trabalhar trabalho profissionalmente profissional experiencia ia inteligencia artificial machine learning ml python',
+      text: 'Trabalha com IA profissionalmente? Ainda não: IA e Machine Learning são foco de estudo atual. Profissionalmente, dois estágios de TI.',
+      answer: 'Ainda não profissionalmente: IA & Machine Learning são meu foco de estudo atual — estou “em treinamento”. Profissionalmente, fiz dois estágios de TI: na Metha Informática Ltda e na Secretaria Municipal de Cultura de Porto Alegre.',
+      action: { label: 'Ver a trajetória', href: '#trajetoria' }
+    },
+    {
+      id: 'salario', title: 'Pretensão salarial', q: 'Qual sua pretensão salarial?',
+      tags: 'salario salarial pretensao pretendido remuneracao valor quanto cobra custa contratar contratacao',
+      text: 'Pretensão salarial e remuneração.',
+      answer: 'Isso eu prefiro conversar diretamente — me chama no [LinkedIn](' + LINKEDIN + ') e a gente conversa.',
+      action: { label: 'Ir para Contato', href: '#contato' }
     },
     {
       id: 'metha', title: 'Estágio na Metha Informática', q: 'O que você fazia na Metha?',
@@ -100,7 +114,7 @@
     },
     {
       id: 'objetivos', title: 'Objetivos', q: 'Quais são seus objetivos?',
-      tags: 'objetivo objetivos meta metas sonho futuro plano planos carreira pretende producao deploy grande',
+      tags: 'objetivo objetivos meta metas sonho futuro plano planos carreira producao deploy grande',
       text: 'Tornar-se um grande desenvolvedor de software e levar modelos de IA para a produção.',
       answer: 'Quero me tornar um grande desenvolvedor de software — e unir minha base de back-end com IA para levar modelos do notebook para a produção. Enquanto isso, sigo treinando: a perda só cai.'
     },
@@ -115,7 +129,7 @@
       id: 'projetos', title: 'Projetos e GitHub', q: 'Onde vejo seus projetos?',
       tags: 'projetos projeto repositorios repositorio codigo fonte github portfolio',
       text: 'Repositórios no GitHub; este site também é um projeto, escrito em JavaScript puro.',
-      answer: 'Meus repositórios estão no [GitHub](' + GITHUB + '). E este próprio site é um projeto: galeria neural, rede neural treinando ao vivo e este mini-RAG, tudo em JavaScript puro, sem bibliotecas.'
+      answer: 'Meus repositórios estão no [GitHub](' + GITHUB + '). E este próprio site é um projeto: galeria neural, rede neural treinando ao vivo e este mini RAG, tudo em JavaScript puro, sem bibliotecas.'
     },
     {
       id: 'site', title: 'Como este site foi feito', q: 'Como este site foi feito?',
@@ -140,7 +154,7 @@
       id: 'paleta', title: 'Paleta de cores da foto', q: 'De onde vieram as cores do site?',
       tags: 'cores cor paleta tema design azul menta verde visual',
       text: 'Paleta de cores extraída da foto com k-means (k = 4); verde-menta herdado do portfólio antigo.',
-      answer: 'A paleta saiu da minha própria foto com k-means: os pixels foram agrupados em k = 4 clusters e os centróides viraram cores — o azul da camiseta, os tons de pele ao sol e a sombra. O verde-menta veio do meu portfólio antigo.',
+      answer: 'A paleta saiu da minha própria foto com k-means: os pixels foram agrupados em k = 4 clusters e os centroides viraram cores — o azul da camiseta, os tons de pele ao sol e a sombra. O verde-menta veio do meu portfólio antigo.',
       action: { label: 'Ver o K-Means na galeria', gallery: 'kmeans' }
     },
     {
@@ -153,8 +167,8 @@
     {
       id: 'kmeans', title: 'K-Means', q: 'Como funciona o k-means?',
       tags: 'kmeans k means clustering agrupamento agrupar clusters centroide centroides supervisionado pop art',
-      text: 'K-Means agrupa dados em k clusters sem rótulos: cada ponto vai para o centróide mais próximo e cada centróide vai para a média do grupo. Aprendizado não supervisionado.',
-      answer: 'O K-Means agrupa dados em k clusters sem nenhum rótulo: cada ponto vai para o centróide mais próximo e cada centróide se move para a média do seu grupo, repetindo até estabilizar. É aprendizado não supervisionado — na galeria, ele reduz minha foto a k cores e vira pop art.',
+      text: 'K-Means agrupa dados em k clusters sem rótulos: cada ponto vai para o centroide mais próximo e cada centroide vai para a média do grupo. Aprendizado não supervisionado.',
+      answer: 'O K-Means agrupa dados em k clusters sem nenhum rótulo: cada ponto vai para o centroide mais próximo e cada centroide se move para a média do seu grupo, repetindo até estabilizar. É aprendizado não supervisionado — na galeria, ele reduz minha foto a k cores e vira pop art.',
       action: { label: 'Ver o K-Means na galeria', gallery: 'kmeans' }
     },
     {
@@ -182,7 +196,7 @@
       id: 'delaunay', title: 'Triangulação de Delaunay', q: 'O que é a triangulação de Delaunay?',
       tags: 'delaunay triangulacao triangulos triangulo low poly lowpoly malha poligonos geometria computacional',
       text: 'A triangulação de Delaunay liga pontos em triângulos maximizando o menor ângulo; o retrato vira low-poly.',
-      answer: 'A triangulação de Delaunay liga pontos em triângulos maximizando o menor ângulo de cada um, evitando triângulos finos demais. Na galeria, há mais pontos onde a foto tem mais detalhe (olhos, cabelo, fones) e cada triângulo recebe a cor média dos pixels que cobre: o retrato vira low-poly.',
+      answer: 'A triangulação de Delaunay liga pontos em triângulos sem deixar nenhum ponto dentro do círculo circunscrito de outro triângulo; entre todas as triangulações, é a que maximiza o menor ângulo da malha, evitando triângulos finos demais. Na galeria, há mais pontos onde a foto tem mais detalhe (olhos, cabelo, fones) e cada triângulo recebe a cor média dos pixels que cobre: o retrato vira low-poly.',
       action: { label: 'Ver o low-poly na galeria', gallery: 'delaunay' }
     },
     {
@@ -599,7 +613,7 @@
     el('div', { class: 'rg__persona' }, [
       el('span', { class: 'rg__ring' }, avatar(40, 'rg-av--lg')),
       el('div', { class: 'rg__who' }, [
-        el('p', { class: 'rg__name' }, ['RaulGPT', el('span', { class: 'tag', text: 'mini-RAG' })]),
+        el('p', { class: 'rg__name' }, ['RaulGPT', el('span', { class: 'tag', text: 'mini RAG' })]),
         el('p', { class: 'rg__sub mono' }, ['TF-IDF + cosseno', el('span', { class: 'rg__sub-x', text: ' · 100% no seu navegador' })])
       ])
     ]),

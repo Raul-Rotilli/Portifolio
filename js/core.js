@@ -34,13 +34,26 @@
 
   /* ---------- ambiente ---------- */
   var mqReduce = window.matchMedia ? window.matchMedia('(prefers-reduced-motion: reduce)') : null;
-  RR.reducedMotion = !!(mqReduce && mqReduce.matches);
+  /* além da preferência do sistema, o visitante pode pausar as animações no site (rodapé / Ctrl+K) */
+  var motionOff = false;
+  try { motionOff = localStorage.getItem('rr-motion-off') === '1'; } catch (e) { /* sem storage */ }
+  RR.motionOff = motionOff;
+  RR.reducedMotion = !!(mqReduce && mqReduce.matches) || motionOff;
+  if (motionOff) document.documentElement.classList.add('motion-off');
   if (mqReduce && mqReduce.addEventListener) {
     mqReduce.addEventListener('change', function (e) {
-      RR.reducedMotion = e.matches;
-      RR.emit('reducedmotion', e.matches);
+      RR.reducedMotion = e.matches || RR.motionOff;
+      RR.emit('reducedmotion', RR.reducedMotion);
     });
   }
+  /* liga/desliga a pausa manual de animações (WCAG 2.2.2) */
+  RR.setMotionOff = function (off) {
+    RR.motionOff = !!off;
+    document.documentElement.classList.toggle('motion-off', RR.motionOff);
+    try { localStorage.setItem('rr-motion-off', RR.motionOff ? '1' : '0'); } catch (e) { /* sem storage */ }
+    RR.reducedMotion = RR.motionOff || !!(mqReduce && mqReduce.matches);
+    RR.emit('reducedmotion', RR.reducedMotion);
+  };
   RR.isTouch = window.matchMedia ? window.matchMedia('(pointer: coarse)').matches : false;
   RR.dpr = function (max) { return Math.min(window.devicePixelRatio || 1, max || 2); };
 

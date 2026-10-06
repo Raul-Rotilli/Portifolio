@@ -14,14 +14,15 @@ Um portfólio que é, ele mesmo, um experimento de IA. Sou desenvolvedor em form
 - **Corrida de otimizadores:** SGD, Momentum, RMSProp e Adam descendo a mesma superfície de perda.
 - **RaulGPT:** um mini RAG com TF-IDF e similaridade de cosseno que responde sobre a minha trajetória, 100% no navegador.
 - **Log de treino:** a trajetória contada como épocas, com a curva de perda caindo.
-- **Embeddings de habilidades:** um mapa 2D em que habilidades parecidas ficam próximas.
+- **Mapa de habilidades:** um mapa 2D ilustrativo, posicionado à mão, no estilo de um espaço de embeddings (habilidades parecidas ficam próximas).
 - **Paleta de comandos:** <kbd>Ctrl</kbd> + <kbd>K</kbd> (ou <kbd>/</kbd>) para navegar, abrir obras e disparar ações.
+- **Pausar animações:** botão no rodapé (ou na paleta de comandos) para quem prefere menos movimento.
 - **Easter egg:** experimente o código Konami (↑ ↑ ↓ ↓ ← → ← → B A).
 
 ## Tecnologias
 
 - HTML, CSS e JavaScript puros, **sem dependências** e sem etapa de build.
-- Canvas 2D para todas as visualizações; animações pausam fora da tela e respeitam `prefers-reduced-motion`.
+- Canvas 2D na maioria das visualizações (o log de treino e o mapa de habilidades são SVG); animações pausam fora da tela, respeitam `prefers-reduced-motion` e podem ser pausadas pelo botão no rodapé.
 - Foto recortada com a rede de segmentação **IS-Net**; paleta de cores extraída da foto com k-means.
 - Deploy estático na Vercel.
 
@@ -39,9 +40,9 @@ python3 -m http.server 8000
 ```text
 .
 ├── index.html              # página única com todas as seções
-├── assets/                 # retratos, favicon e imagem de compartilhamento
+├── assets/                 # retratos, favicon, imagem de compartilhamento (+ ícones do site antigo)
 ├── js/
-│   ├── portrait-data.js    # retrato embutido (funciona também via file://)
+│   ├── portrait-data.js    # retrato embutido, carregado só via file:// (onde o canvas não lê arquivos)
 │   ├── core.js             # utilitários compartilhados (namespace RR)
 │   ├── art/                # uma obra por arquivo: kmeans, convolution, svd, ascii,
 │   │                       # delaunay, stipple, flowfield, dither

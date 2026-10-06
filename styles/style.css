@@ -224,8 +224,9 @@ input[type='range']::-moz-range-thumb {
   width: 14px; height: 14px; border-radius: 50%; background: var(--bg); border: 2px solid var(--mint);
 }
 input[type='range']:focus-visible { outline: none; }
-input[type='range']:focus-visible::-webkit-slider-thumb { box-shadow: 0 0 0 6px rgba(158, 245, 207, 0.35); }
-input[type='range']:focus-visible::-moz-range-thumb { box-shadow: 0 0 0 6px rgba(158, 245, 207, 0.35); }
+input[type='range']:focus-visible::-webkit-slider-thumb { box-shadow: 0 0 0 3px var(--bg), 0 0 0 5px var(--mint); }
+input[type='range']:focus-visible::-moz-range-thumb { box-shadow: 0 0 0 3px var(--bg), 0 0 0 5px var(--mint); }
+@media (pointer: coarse) { input[type='range'] { height: 40px; } }
 
 select, .select {
   -webkit-appearance: none; appearance: none; width: 100%; min-height: 40px; padding: 0 36px 0 12px;
@@ -312,7 +313,8 @@ input[type='text']:focus, input[type='search']:focus, textarea:focus { outline: 
     transform: translateY(-8px); opacity: 0; visibility: hidden;
     transition: opacity 0.25s, transform 0.25s var(--ease-out), visibility 0.25s;
   }
-  .nav.is-open { transform: none; opacity: 1; visibility: visible; }
+  /* ao abrir, a visibilidade muda na hora (o fade continua): permite mover o foco para o 1º link */
+  .nav.is-open { transform: none; opacity: 1; visibility: visible; transition: opacity 0.25s, transform 0.25s var(--ease-out), visibility 0s; }
   .nav a { padding: 12px 14px; border-radius: 10px; font-size: 1rem; }
   .nav a.is-active::after { left: auto; right: 14px; top: 50%; bottom: auto; margin-top: -2px; }
   .topbar__actions { margin-left: auto; }
@@ -395,3 +397,25 @@ input[type='text']:focus, input[type='search']:focus, textarea:focus { outline: 
 
 /* subtítulos internos de seção (Lab, Trajetória) */
 .lab__subtitle { font-size: clamp(1.5rem, 3.2vw, 2.2rem); }
+
+/* contato: no celular os cartões viram uma coluna de largura uniforme */
+@media (max-width: 600px) {
+  .contact__links { flex-direction: column; align-items: stretch; max-width: 300px; margin-inline: auto; }
+  .contact__link { justify-content: flex-start; }
+}
+
+/* animações CSS infinitas pausam quando a seção sai da tela (main.js marca .is-offscreen) */
+.is-offscreen *, .is-offscreen *::before, .is-offscreen *::after { animation-play-state: paused !important; }
+
+/* botão "Pausar animações" (WCAG 2.2.2): html.motion-off desliga animações e transições */
+.motion-off *, .motion-off *::before, .motion-off *::after {
+  animation-duration: 0.001ms !important; animation-iteration-count: 1 !important; transition-duration: 0.001ms !important;
+}
+html.motion-off { scroll-behavior: auto; }
+.footer__motion {
+  display: inline-flex; align-items: center; gap: 8px; min-height: 32px; padding: 0 12px; border-radius: 999px;
+  border: 1px solid var(--line-strong); color: var(--text-2); font-size: 0.8rem;
+  transition: border-color 0.2s, color 0.2s;
+}
+.footer__motion:hover { border-color: var(--mint); color: var(--text); }
+.footer__motion[aria-pressed='true'] { color: var(--mint); border-color: rgba(158, 245, 207, 0.45); }

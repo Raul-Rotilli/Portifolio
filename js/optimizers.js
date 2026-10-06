@@ -39,7 +39,7 @@
     {
       id: 'sela', label: 'Sela', name: 'Ponto de sela',
       formula: 'f(x, y) = x²/2 + (y² − 1)²/4',
-      desc: 'Largando sobre a crista, o gradiente em y é quase zero: o SGD empaca na sela, enquanto Momentum e os métodos adaptativos escapam para um dos vales.',
+      desc: 'Largando sobre a crista, o gradiente em y é quase zero: o SGD se arrasta até a sela e é o último a escapar, enquanto o Momentum, que acumula velocidade, escapa primeiro para um dos vales.',
       center: [0, 0], half: [2.9, 1.75], start: [-2.6, 0.001],
       lr: 0.01, maxSteps: 1500, pace: 90, target: 1e-4, delta: 1e-2,
       marks: [{ x: 0, y: 1, kind: 'min' }, { x: 0, y: -1, kind: 'min' }, { x: 0, y: 0, kind: 'saddle' }],
@@ -308,8 +308,11 @@
     var state = {
       S: SURFACES[0], lr: SURFACES[0].lr, speed: 1, running: false, finished: false,
       starts: {}, lrs: {}, acc: 0, conv: 0, hover: null, kbd: null, focused: false, emph: null,
-      W: 0, H: 0, dpr: 1, dom: null, field: null, job: null, dirty: true, visible: false, time: 0, announced: false
+      W: 0, H: 0, dpr: 1, dom: null, field: null, job: null, dirty: true, visible: false, time: 0, announced: false,
+      userActed: false   // só anuncia o resultado para leitores de tela se o visitante interagiu
     };
+    root.addEventListener('pointerdown', function () { state.userActed = true; }, true);
+    root.addEventListener('keydown', function () { state.userActed = true; }, true);
     var runners = OPTS.map(makeRunner);
     var cache = {};
 
@@ -517,7 +520,7 @@
         else msg = 'Corrida concluída: nenhum otimizador atingiu a perda-alvo com esse η.';
         var div = runners.filter(function (r) { return r.status === 'div'; });
         if (div.length) msg += ' Divergiram: ' + div.map(function (r) { return r.o.name; }).join(', ') + '.';
-        live.textContent = msg;
+        if (state.userActed) live.textContent = msg;
       }
     }
 
@@ -589,7 +592,7 @@
           li.classList.toggle('is-out', r.status === 'div' || r.status === 'max');
           if (r.status === 'conv') { b.textContent = '✓ ' + (r.place ? r.place + 'º' : ''); b.title = 'Atingiu a perda-alvo'; }
           else if (r.status === 'div') { b.textContent = '✕ divergiu'; b.title = 'O passo explodiu: η alto demais para esta região'; }
-          else if (r.status === 'max') { b.textContent = '✓ limite'; b.title = 'Atingiu o limite de passos sem chegar à perda-alvo'; }
+          else if (r.status === 'max') { b.textContent = '⏱ limite'; b.title = 'Atingiu o limite de passos sem chegar à perda-alvo'; }
           else { b.textContent = ''; b.title = ''; }
         }
       });

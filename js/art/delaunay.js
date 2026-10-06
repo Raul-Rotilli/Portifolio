@@ -267,7 +267,7 @@
     short: 'Delaunay',
     algo: 'Triangulação de Delaunay',
     field: 'Geometria computacional',
-    description: 'Amostragem por importância espalha mais pontos onde o gradiente da imagem é forte (olhos, cabelo, fones) e a triangulação de Delaunay liga esses pontos maximizando o menor ângulo de cada triângulo. Cada face recebe a cor média dos pixels que cobre, e o retrato vira alguns milhares de polígonos. Malhas assim aparecem em visão computacional, reconstrução 3D e interpolação de dados espaciais.',
+    description: 'Amostragem por importância espalha mais pontos onde o gradiente da imagem é forte (olhos, cabelo, fones) e a triangulação de Delaunay liga esses pontos sem deixar nenhum ponto dentro do círculo circunscrito de um triângulo; entre todas as triangulações possíveis, é a que maximiza o menor ângulo da malha, evitando triângulos finos. Cada face recebe a cor média dos pixels que cobre, e o retrato vira alguns milhares de polígonos. Malhas assim aparecem em visão computacional, reconstrução 3D e interpolação de dados espaciais.',
     params: [
       { id: 'pontos', label: 'Pontos', type: 'range', min: 300, max: 4000, step: 100, value: 1600, format: function (v) { return RR.fmt(v); } },
       {

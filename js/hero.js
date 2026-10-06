@@ -24,7 +24,7 @@
   var LITTLE_ENDIAN = new Uint8Array(new Uint32Array([1]).buffer)[0] === 1;
 
   var STYLES = ['partículas', 'pontilhado', 'varredura'];
-  var PHASE_LABEL = { fwd: 'adicionando ruído', rev: 'denoising', idle: 'amostra gerada ✓' };
+  var PHASE_LABEL = { fwd: 'adicionando ruído', rev: 'removendo ruído', idle: 'amostra gerada ✓' };
 
   RR.ready(function () {
     var stream = document.getElementById('hero-stream');
@@ -90,6 +90,9 @@
 
     var ui = buildHud();
     stage.setAttribute('tabindex', '0');
+    // é focável e ativável (Enter/Espaço/clique): expõe como botão, não como imagem
+    stage.setAttribute('role', 'button');
+    stage.setAttribute('aria-label', 'Retrato de Raul Rotilli formado por partículas que surgem do ruído. Ativar para gerar outra amostra');
     stage.setAttribute('aria-describedby', 'hero-stage-help');
 
     /* ---------- carga + amostragem ---------- */
@@ -307,7 +310,7 @@
       o.sample = RR.el('span', { class: 'hero__sample' }, '');
       o.count = RR.el('span', { class: 'hero__count' }, '');
       o.live = RR.el('span', { class: 'sr-only', 'aria-live': 'polite' });
-      var help = RR.el('span', { id: 'hero-stage-help', class: 'sr-only' },
+      var help = RR.el('span', { id: 'hero-stage-help', hidden: true },
         'Pressione Enter ou Espaço para gerar outra amostra.');
       hud.appendChild(RR.el('div', { class: 'hero__hud-top' }, seg));
       hud.appendChild(RR.el('div', { class: 'hero__hud-bottom' }, [chips, hint]));

@@ -41,6 +41,7 @@
   font-size: 0.74rem; line-height: 1.3; color: var(--muted);
 }
 .hero .hero__eyebrow b { color: var(--text); font-weight: 500; }
+.hero .hero__eyebrow-sep { color: var(--muted); opacity: 0.7; }
 
 .hero .hero__title {
   font-size: clamp(2.75rem, 6.6vw, 5.6rem);
@@ -396,6 +397,7 @@
     padding: 0; border: 0; border-radius: 0; background: none;
     font-size: 0.72rem;
   }
+  .hero .hero__eyebrow-sep { display: none; }
 }
 @media (max-width: 420px) {
   .hero .hero__stage::after { inset: -8px; --l: 16px; }
@@ -417,3 +419,8 @@
 @keyframes hero-fade { from { opacity: 0; transform: scale(0.975); } }
 @keyframes hero-orbit { to { transform: rotate(360deg); } }
 @keyframes hero-bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(5px); } }
+
+/* telas de toque: botões de estilo do HUD com alvo de toque confortável */
+@media (pointer: coarse) {
+  .hero .hero__styles button { min-height: 30px; padding: 6px 10px; }
+}

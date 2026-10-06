@@ -178,7 +178,19 @@
       if (!open && focusToggle) toggle.focus();
     }
 
-    on(toggle, 'click', function () { setOpen(!isOpen()); });
+    on(toggle, 'click', function () {
+      var open = !isOpen();
+      setOpen(open);
+      // leva o foco para o primeiro link: os links vêm antes do botão no DOM
+      if (open) {
+        var first = nav.querySelector('a');
+        if (first) setTimeout(function () { first.focus(); }, 0);
+      }
+    });
+    // Tab saindo do botão para fora do menu fecha o painel
+    on(toggle, 'focusout', function (e) {
+      if (isOpen() && e.relatedTarget && !nav.contains(e.relatedTarget)) setOpen(false);
+    });
     on(nav, 'click', function (e) {
       if (e.target.closest && e.target.closest('a')) setOpen(false);
     });
@@ -361,6 +373,37 @@
   }
 
   /* ---------- inicialização ---------- */
+  /* ---------- animações CSS infinitas pausam fora da tela ---------- */
+  function initOffscreenPause() {
+    ['.hero', '#gallery-root', '#playground-root', '#optimizers-root', '#raulgpt-root',
+      '#timeline-root', '#embedding-root', '#sobre', '.contact'].forEach(function (sel) {
+      var el = doc.querySelector(sel);
+      if (!el) return;
+      RR.whenVisible(el,
+        function () { el.classList.remove('is-offscreen'); },
+        function () { el.classList.add('is-offscreen'); },
+        { rootMargin: '0px' });
+    });
+  }
+
+  /* ---------- botão "Pausar animações" no rodapé ---------- */
+  function initMotionToggle() {
+    var host = doc.querySelector('.footer__inner');
+    if (!host || !RR.setMotionOff) return;
+    var btn = RR.el('button', { class: 'footer__motion', type: 'button' });
+    function sync() {
+      btn.setAttribute('aria-pressed', RR.motionOff ? 'true' : 'false');
+      btn.textContent = RR.motionOff ? '▶ Retomar animações' : '❚❚ Pausar animações';
+    }
+    on(btn, 'click', function () {
+      RR.setMotionOff(!RR.motionOff);
+      if (RR.toast) RR.toast(RR.motionOff ? 'Animações pausadas' : 'Animações retomadas');
+    });
+    RR.on('reducedmotion', sync);
+    sync();
+    host.appendChild(btn);
+  }
+
   safe('revelar', initReveal);
   safe('cabeçalho', initHeader);
   safe('âncoras', initAnchors);
@@ -371,4 +414,6 @@
   safe('atalhos', initShortcutHints);
   safe('console', initConsole);
   safe('konami', initKonami);
+  safe('animações fora da tela', initOffscreenPause);
+  safe('pausar animações', initMotionToggle);
 })();

@@ -286,21 +286,17 @@
     { name: 'JavaScript', c: 'web', x: -0.30, y: 0.24, side: 'r' },
     { name: 'Git/GitHub', c: 'tools', x: -0.04, y: 0.56, side: 't' },
     { name: 'Python', c: 'ia', x: 0.20, y: 0.32, side: 'b' },
-    { name: 'NumPy', c: 'ia', x: 0.36, y: 0.60, side: 't' },
-    { name: 'Pandas', c: 'ia', x: 0.46, y: 0.40, side: 'r' },
-    { name: 'scikit-learn', c: 'ia', x: 0.60, y: 0.68, side: 'r' },
-    { name: 'PyTorch', c: 'ia', x: 0.82, y: 0.50, side: 'r' },
+    { name: 'Machine Learning', c: 'ia', x: 0.46, y: 0.56, side: 't', short: ['Machine', 'Learning'] },
     { name: 'Redes neurais', c: 'ia', x: 0.68, y: 0.24, side: 'r' },
-    { name: 'LLMs & RAG', c: 'ia', x: 0.84, y: 0.04, side: 'b' },
+    { name: 'LLMs', c: 'ia', x: 0.84, y: 0.04, side: 'b' },
     { name: 'Hardware', c: 'infra', x: -0.76, y: -0.44, side: 't' },
     { name: 'Manutenção', c: 'infra', x: -0.62, y: -0.70, side: 'b' },
-    { name: 'Redes', c: 'infra', x: -0.44, y: -0.38, side: 'r' },
+    { name: 'Software', c: 'infra', x: -0.44, y: -0.38, side: 'r' },
     { name: 'Ordens de serviço', c: 'infra', x: -0.30, y: -0.66, side: 'r' },
     { name: 'Comunicação assertiva', c: 'soft', x: 0.24, y: -0.46, side: 'b', short: ['Comunicação', 'assertiva'] },
-    { name: 'Trabalho em equipe', c: 'soft', x: 0.50, y: -0.72, side: 'b', short: ['Trabalho', 'em equipe'] },
     { name: 'Networking', c: 'soft', x: 0.66, y: -0.40, side: 'r' }
   ];
-  var TOUR = ['Python', 'Java', 'LLMs & RAG', 'Comunicação assertiva', 'Redes', 'JavaScript'];
+  var TOUR = ['Python', 'Java', 'LLMs', 'Comunicação assertiva', 'Software', 'JavaScript'];
 
   function initEmbedding() {
     var root = document.getElementById('embedding-root');
@@ -432,7 +428,7 @@
       });
       svgEl.appendChild(hulls);
 
-      // vetor "foco atual": do centróide de back-end ao de IA
+      // vetor "foco atual": do centroide de back-end ao de IA
       var la = labelPos.web, lb = labelPos.ia;
       var ax = la.x + la.w / 2 + 14, ay = la.y - 4, bx = lb.x - lb.w / 2 - 14, by = lb.y - 4;
       var arrowId = nextId('emb-arrow');
@@ -531,6 +527,9 @@
       active = i;
       applyActive();
     }
+    // ativação automática (tour / movimento reduzido): em telas estreitas não abre o cartão, que cobriria o mapa
+    var autoActive = false;
+    function setAutoActive(i) { autoActive = true; setActive(i); autoActive = false; }
 
     function applyActive() {
       var a = active >= 0 ? SKILLS[active] : null;
@@ -543,7 +542,8 @@
       });
       lines.forEach(function (l) { l.style.color = a ? CLUSTERS[a.c].color : ''; l.classList.toggle('is-on', !!a); });
       chips.forEach(function (c, i) { c.classList.toggle('is-active', i === active); });
-      if (a && nodes.length) { place(t); showTip(a); } else tip.classList.remove('is-on');
+      if (a && nodes.length && !(autoActive && plot.clientWidth < 560)) { place(t); showTip(a); }
+      else { if (a && nodes.length) place(t); tip.classList.remove('is-on'); }
     }
 
     function pin(i) {
@@ -607,7 +607,12 @@
     svgEl.addEventListener('click', function () { stopTour(); if (pinned >= 0) pin(-1); else setActive(-1); });
 
     /* ----- animação: só com a seção visível ----- */
+    var acc = 0;
     var loop = RR.loop(function (dt) {
+      // deriva lenta: 30 fps bastam e custam metade
+      acc += dt;
+      if (acc < 1 / 30) return;
+      dt = acc; acc = 0;
       t += dt;
       place(t);
       if (tourOn) {
@@ -615,7 +620,7 @@
         if (tourTimer > 3.2 || active < 0) {
           tourTimer = 0;
           var name = TOUR[tourIdx++ % TOUR.length];
-          setActive(SKILLS.findIndex(function (s) { return s.name === name; }));
+          setAutoActive(SKILLS.findIndex(function (s) { return s.name === name; }));
         }
       }
     });
@@ -626,7 +631,7 @@
     document.addEventListener('visibilitychange', sync);
     RR.on('reducedmotion', function (on) { if (on) { stopTour(); place(0); } sync(); });
 
-    if (RR.reducedMotion) { setActive(SKILLS.findIndex(function (s) { return s.name === 'Python'; })); tourOn = false; }
+    if (RR.reducedMotion) { setAutoActive(SKILLS.findIndex(function (s) { return s.name === 'Python'; })); tourOn = false; }
     var onResize = RR.debounce(function () { build(); }, 150);
     if ('ResizeObserver' in window) new ResizeObserver(function () { if (!geo) build(); else onResize(); }).observe(plot);
     else { window.addEventListener('resize', onResize); window.addEventListener('load', onResize); }

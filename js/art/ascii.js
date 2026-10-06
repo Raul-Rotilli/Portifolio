@@ -139,7 +139,7 @@
     title: 'Retrato tokenizado',
     short: 'Tokens',
     algo: 'Tokenização',
-    field: 'Processamento de linguagem',
+    field: 'Processamento de linguagem natural',
     description: 'Antes de ler qualquer coisa, um modelo de linguagem quebra o texto em tokens e os transforma em números. Aqui o caminho é o inverso: cada região da foto vira um caractere, escolhido pelo brilho (ASCII), tirado de um fluxo de vocabulário de IA (Tokens) ou de um bit do nome do Raul em UTF-8 (Binário).',
     params: [
       {

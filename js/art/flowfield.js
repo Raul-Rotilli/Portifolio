@@ -81,7 +81,7 @@
     title: 'Pintura por gradientes',
     short: 'Gradientes',
     algo: 'Campo vetorial de gradientes',
-    field: 'Cálculo · descida do gradiente',
+    field: 'Cálculo vetorial · gradientes',
     description: 'O filtro de Sobel mede o gradiente de brilho da foto e cada pincelada segue as isofotas, as curvas de mesmo brilho, perpendiculares ao gradiente; onde a imagem é lisa, um campo de ruído suave assume. Gradientes são o mesmo sinal que treina redes neurais: a retropropagação calcula o gradiente da perda e a descida do gradiente segue esse campo morro abaixo, passo a passo.',
     params: [
       { id: 'tracos', label: 'Traços', type: 'range', min: 2000, max: 30000, step: 1000, value: 12000, format: function (v) { return RR.fmt(v); } },
@@ -89,7 +89,7 @@
       {
         id: 'estilo', label: 'Estilo', type: 'select', value: 'oleo', options: [
           { value: 'oleo', label: 'Óleo' },
-          { value: 'neon', label: 'Néon' },
+          { value: 'neon', label: 'Neon' },
           { value: 'nanquim', label: 'Nanquim' }
         ]
       }

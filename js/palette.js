@@ -84,7 +84,13 @@
     else target.scrollIntoView({ behavior: behavior, block: 'start' });
     return target;
   }
-  function goSection(id) { return function () { scrollToId(id, { focus: true }); }; }
+  function goSection(id) {
+    return function () {
+      scrollToId(id, { focus: true });
+      // mantém a URL coerente (remove um #galeria/<obra> antigo), como os links do topo
+      try { history.replaceState(null, '', id === 'inicio' ? location.pathname + location.search : '#' + id); } catch (e) { /* file:// */ }
+    };
+  }
 
   function focusWhenReady(id, tries) {
     var input = document.getElementById(id);
@@ -151,12 +157,21 @@
       {
         group: 'Ações', label: 'Perguntar ao RaulGPT', icon: 'chat', hint: 'chat',
         keywords: 'rag pergunta conversar chat',
-        run: function () { scrollToId('raulgpt'); focusWhenReady('raulgpt-input'); }
+        run: function () { scrollToId('raulgpt-root') || scrollToId('raulgpt'); focusWhenReady('raulgpt-input'); }
       },
       {
         group: 'Ações', label: 'Copiar link do portfólio', icon: 'link', hint: 'url',
         keywords: 'compartilhar url endereço copiar',
         run: copyLink
+      },
+      {
+        group: 'Ações', label: RR.motionOff ? 'Retomar animações' : 'Pausar animações', icon: 'noise', hint: 'movimento',
+        keywords: 'animação movimento parar pausar acessibilidade reduzir',
+        run: function () {
+          if (!RR.setMotionOff) return;
+          RR.setMotionOff(!RR.motionOff);
+          if (RR.toast) RR.toast(RR.motionOff ? 'Animações pausadas' : 'Animações retomadas');
+        }
       },
       {
         group: 'Ações', label: 'Ativar modo overfitting', icon: 'zap', hint: '↑↑↓↓←→←→BA',

@@ -1,5 +1,5 @@
 /* =========================================================================
-   art/dither.js — "Quantização 1-bit"
+   art/dither.js — "Quantização em poucos bits"
    Difusão de erro de Floyd–Steinberg sobre a luminância dos pixels opacos:
    cada pixel vira um de N níveis e o erro do arredondamento vai para os
    vizinhos. Desenhado em blocos inteiros de pixels do dispositivo (nítido).
@@ -28,11 +28,11 @@
   RR.art.register({
     id: 'dither',
     order: 8,
-    title: 'Quantização 1-bit',
+    title: 'Quantização em poucos bits',
     short: 'Dithering',
     algo: 'Floyd–Steinberg',
     field: 'Quantização',
-    description: 'A difusão de erro de Floyd–Steinberg reduz cada pixel a poucos níveis de tom e empurra o erro do arredondamento para os vizinhos, então os tons continuam corretos na média. É a mesma ideia por trás da quantização de modelos de IA: guardar pesos em int8 ou int4, com bem menos bits, distribuindo o erro para preservar a qualidade.',
+    description: 'A difusão de erro de Floyd–Steinberg reduz cada pixel a poucos níveis de tom e empurra o erro do arredondamento para os vizinhos, então os tons continuam corretos na média. É parente da quantização de modelos de IA: guardar pesos em int8 ou int4, com bem menos bits; métodos como o GPTQ chegam a compensar o erro de cada peso nos que ainda faltam quantizar.',
     params: [
       {
         id: 'levels', label: 'Níveis', type: 'range', min: 2, max: 6, step: 1, value: 2,

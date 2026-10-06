@@ -230,7 +230,8 @@
       if (!items[p.id]) items[p.id] = makeItem(p);
       var it = items[p.id];
       it.num.textContent = pad2(i + 1);
-      it.btn.setAttribute('aria-label', 'Obra ' + pad2(i + 1) + ': ' + (p.title || p.id));
+      // o nome acessível começa pelo rótulo visível (WCAG 2.5.3)
+      it.btn.setAttribute('aria-label', pad2(i + 1) + ' ' + String(p.short || p.algo || p.id) + ': obra ' + (p.title || p.id));
       dom.list.appendChild(it.btn);
     });
     dom.strip.hidden = pieces.length < 2;
@@ -622,7 +623,8 @@
   function whenDone(maxMs) {
     return new Promise(function (resolve) {
       if (finished) { resolve(!failed); return; }
-      var t = setTimeout(function () { resolve(!failed); }, maxMs);
+      // no tempo limite só conta como sucesso se o render realmente terminou
+      var t = setTimeout(function () { resolve(finished && !failed); }, maxMs);
       waiters.push(function (ok) { clearTimeout(t); resolve(ok); });
     });
   }
@@ -810,11 +812,20 @@
     userActed = true;
     var label = b.querySelector('span');
     b.setAttribute('aria-busy', 'true');
-    label.textContent = 'Preparando…';
-    whenDone(8000).then(function (ok) {
+    label.textContent = finished ? 'Preparando…' : 'Aguardando…';
+    if (!finished && RR.toast) RR.toast('A obra ainda está sendo gerada: o PNG sai assim que ela terminar.');
+    whenDone(90000).then(function (ok) {
       b.removeAttribute('aria-busy');
       label.textContent = 'Baixar PNG';
-      if (!ok || !buf || pieces[cur] !== p) {
+      if (pieces[cur] !== p) {
+        if (RR.toast) RR.toast('A obra mudou antes de terminar. Clique em Baixar PNG de novo.');
+        return;
+      }
+      if (!finished && !failed) {
+        if (RR.toast) RR.toast('A obra ainda não terminou de renderizar. Tente de novo em instantes.');
+        return;
+      }
+      if (!ok || !buf) {
         if (RR.toast) RR.toast('Não foi possível gerar o PNG desta obra.');
         return;
       }

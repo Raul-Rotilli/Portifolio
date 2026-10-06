@@ -64,7 +64,7 @@
     return P;
   }
 
-  /* k-means++: cada novo centróide é sorteado com probabilidade ∝ D² */
+  /* k-means++: cada novo centroide é sorteado com probabilidade ∝ D² */
   function seedCenters(P, k, rand) {
     var m = P.m, pts = P.pts, C = new Float32Array(k * 3), D = new Float64Array(m), i, sum = 0;
     var f = Math.floor(rand() * m) * 3;
@@ -93,7 +93,7 @@
     return C;
   }
 
-  /* um passo de Lloyd: atribui ao centróide mais próximo e move para a média */
+  /* um passo de Lloyd: atribui ao centroide mais próximo e move para a média */
   function lloyd(P, C, k, labels) {
     var m = P.m, pts = P.pts, rgb = P.rgb;
     var S = new Float64Array(k * 3), R = new Float64Array(k * 3), N = new Uint32Array(k);
@@ -225,7 +225,7 @@
     ctx.restore();
   }
 
-  /* faixa com os centróides (cores reais) e códigos hex */
+  /* faixa com os centroides (cores reais) e códigos hex */
   function drawStrip(ctx, env, s) {
     var W = env.width, H = env.height, cols = s.cols, k = cols.length;
     var order = cols.map(function (c, i) { return i; }).sort(function (a, b) { return lum(cols[a]) - lum(cols[b]); });
@@ -256,7 +256,7 @@
     ctx.fillText('paleta aprendida', pad, y0 + pad * 0.7);
     ctx.fillStyle = 'rgba(195,201,222,0.75)';
     ctx.textAlign = 'right';
-    ctx.fillText('k = ' + k + ' centróides', W - pad, y0 + pad * 0.7);
+    ctx.fillText('k = ' + k + ' centroides', W - pad, y0 + pad * 0.7);
 
     var y = y0 + pad * 0.7 + titleH;
     order.forEach(function (ci, j) {
@@ -306,7 +306,7 @@
     short: 'K-Means',
     algo: 'K-Means',
     field: 'Aprendizado não supervisionado',
-    description: 'O K-Means agrupa os milhares de pixels da foto em k cores, sem nenhum rótulo: a cada iteração, cada pixel vai para o centróide mais próximo e cada centróide se move para a média do seu grupo. É aprendizado não supervisionado na prática, e foi assim que a paleta deste site saiu da minha foto.',
+    description: 'O K-Means agrupa os milhares de pixels da foto em k cores, sem nenhum rótulo: a cada iteração, cada pixel vai para o centroide mais próximo e cada centroide se move para a média do seu grupo. É aprendizado não supervisionado na prática, e foi assim que a paleta deste site saiu da minha foto.',
     params: [
       { id: 'k', label: 'Clusters (k)', type: 'range', min: 2, max: 12, step: 1, value: 5, format: function (v) { return 'k = ' + v; } },
       { id: 'layout', label: 'Layout', type: 'select', options: [{ value: 'single', label: 'Único' }, { value: 'warhol', label: 'Warhol 2×2' }], value: 'single' },
@@ -331,7 +331,11 @@
           var off = ((env.seed >>> 0) + 1) % POP.length;
           tiles = POP.map(function (t, i) { return POP[(i + off) % POP.length]; });
         }
+        // "Aleatorizar" no layout único: a seed escolhe uma paleta pop (a seed padrão mantém as cores reais da foto)
+        var single = null;
+        if (!warhol && !env.thumb && (env.seed >>> 0) !== 7) single = POP[(env.seed >>> 0) % POP.length];
         var geo = layoutGeo(W, H, tiles);
+        if (single) geo[0].bg = single.bg;
         var C = seedCenters(P, k, rand);
         var labels = new Uint8Array(P.m).fill(255);
         var caches = geo.map(function () { return {}; });
@@ -346,7 +350,7 @@
         }
         function strip() { return p.palette && !env.thumb ? { cols: res.cols, counts: res.counts } : null; }
         function drawLow() {
-          var colors = tileColors(res.cols, tiles);
+          var colors = single ? tileColors(res.cols, [single]) : tileColors(res.cols, tiles);
           var imgs = colors.map(function (cs, i) { return labelImage(P.w, P.h, labels, P.pix, null, cs, caches[i]); });
           compose(ctx, env, geo, imgs, !!env.thumb, strip());
         }
@@ -358,7 +362,7 @@
           env.setInfo(head + mid + ' · inércia ' + sci(res.inertia));
         }
 
-        /* refinamento: atribui cada pixel da fonte em alta resolução ao centróide final */
+        /* refinamento: atribui cada pixel da fonte em alta resolução ao centroide final */
         function refine(sync) {
           var srcW = Math.min(1000, Math.max(64, Math.round(fit(geo[0]).w * env.dpr)));
           return env.getSource(srcW).then(function (hs) {
@@ -384,7 +388,7 @@
                   if (!sync && performance.now() - start > 9) break;
                 }
                 if (y < hh) { env.frame(work); return; }
-                var colors = tileColors(res.cols, tiles);
+                var colors = single ? tileColors(res.cols, [single]) : tileColors(res.cols, tiles);
                 var imgs = colors.map(function (cs, ti) { return labelImage(w, hh, lab, null, d, cs, caches[ti]); });
                 compose(ctx, env, geo, imgs, true, strip());
                 info(true);
